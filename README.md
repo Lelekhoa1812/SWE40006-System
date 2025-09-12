@@ -16,3 +16,7 @@ Semester 2, 2025.
 - C# (.NET)?
 - Java (Springboot)?
 - Python (FastAPI)?
+
+3. Deployment:
+- Free? Render (backend), Vercel (frontend)
+- Cost? AWS/Azure
