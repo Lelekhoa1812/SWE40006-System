@@ -1,0 +1,49 @@
+{
+  "name": "medical-app-subscription",
+  "version": "1.0.0",
+  "description": "medical app conversation protocol between user and medical specialist",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "database"
+  ],
+  "scripts": {
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.1.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.2",
+    "vitest": "^1.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@10.0.0+sha512.b8fef5494bd3fe4cbd4edabd0745df2ee5be3e4b0b8b08fa643aa3e4c6702ccc0f00d68fa8a8c9858a735a0032485a44990ed2810526c875e416f001b17df12b"
+}
