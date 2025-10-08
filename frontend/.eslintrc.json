@@ -3,7 +3,8 @@
   "env": {
     "browser": true,
     "es2022": true,
-    "node": true
+    "node": true,
+    "jest": true
   },
   "extends": ["eslint:recommended", "prettier"],
   "parser": "@typescript-eslint/parser",
@@ -23,5 +24,19 @@
     "prefer-const": "error",
     "no-console": "warn"
   },
-  "ignorePatterns": ["node_modules/", "dist/", "build/", ".next/", "coverage/"]
+  "ignorePatterns": ["node_modules/", "dist/", "build/", ".next/", "coverage/"],
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**/*"],
+      "env": {
+        "jest": true
+      },
+      "globals": {
+        "describe": "readonly",
+        "it": "readonly",
+        "expect": "readonly",
+        "jest": "readonly"
+      }
+    }
+  ]
 }
