@@ -1,0 +1,67 @@
+[
+  {
+    "id": "doc-001",
+    "name": "Dr. Sarah Johnson",
+    "specialty": "Cardiology",
+    "email": "sarah.johnson@medical.com",
+    "phone": "+1-555-0101",
+    "location": "New York, NY",
+    "rating": 4.8,
+    "experience": 15,
+    "education": "Harvard Medical School",
+    "languages": ["English", "Spanish"],
+    "availability": "Mon-Fri 9AM-5PM"
+  },
+  {
+    "id": "doc-002",
+    "name": "Dr. Michael Chen",
+    "specialty": "Neurology",
+    "email": "michael.chen@medical.com",
+    "phone": "+1-555-0102",
+    "location": "Los Angeles, CA",
+    "rating": 4.9,
+    "experience": 12,
+    "education": "Stanford Medical School",
+    "languages": ["English", "Mandarin"],
+    "availability": "Mon-Thu 8AM-4PM"
+  },
+  {
+    "id": "doc-003",
+    "name": "Dr. Emily Rodriguez",
+    "specialty": "Pediatrics",
+    "email": "emily.rodriguez@medical.com",
+    "phone": "+1-555-0103",
+    "location": "Chicago, IL",
+    "rating": 4.7,
+    "experience": 8,
+    "education": "Northwestern Medical School",
+    "languages": ["English", "Spanish", "French"],
+    "availability": "Mon-Fri 10AM-6PM"
+  },
+  {
+    "id": "doc-004",
+    "name": "Dr. James Wilson",
+    "specialty": "Orthopedics",
+    "email": "james.wilson@medical.com",
+    "phone": "+1-555-0104",
+    "location": "Houston, TX",
+    "rating": 4.6,
+    "experience": 20,
+    "education": "Baylor College of Medicine",
+    "languages": ["English"],
+    "availability": "Tue-Sat 7AM-3PM"
+  },
+  {
+    "id": "doc-005",
+    "name": "Dr. Lisa Park",
+    "specialty": "Dermatology",
+    "email": "lisa.park@medical.com",
+    "phone": "+1-555-0105",
+    "location": "Seattle, WA",
+    "rating": 4.9,
+    "experience": 10,
+    "education": "University of Washington School of Medicine",
+    "languages": ["English", "Korean"],
+    "availability": "Mon-Wed-Fri 9AM-5PM"
+  }
+]
