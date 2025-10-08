@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fastify/cors": "^11.1.0",
     "fastify": "^4.24.3",
     "pino": "^8.16.2",
     "pino-pretty": "^10.2.3",
