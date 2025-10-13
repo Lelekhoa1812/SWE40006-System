@@ -1,0 +1,5 @@
+# Code owners
+/infra/ @team-lead
+/backend/ @team-lead
+/frontend/ @frontend-maintainers
+/docs/ @docs-maintainers
