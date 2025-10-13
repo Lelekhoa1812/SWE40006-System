@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { healthRoutes } from './routes/health';
 import { doctorRoutes } from './routes/doctors';
 import { logger } from './utils/logger';
+import { env } from './env';
 
 const fastify = Fastify({
   logger: logger,
@@ -20,7 +21,7 @@ fastify.register(doctorRoutes, { prefix: '/api/v1' });
 
 const start = async (): Promise<void> => {
   try {
-    const port = Number(process.env.PORT) || 4000;
+    const port = env.PORT;
     await fastify.listen({ port, host: '0.0.0.0' });
     fastify.log.info(`Server listening on port ${port}`);
   } catch (err) {
