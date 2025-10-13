@@ -1,0 +1,20 @@
+name: infra-lint
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+  push:
+    paths:
+      - 'infra/**'
+
+jobs:
+  bicep-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Azure CLI
+        uses: azure/setup-azcli@v3
+      - name: Bicep build
+        run: az bicep build --file infra/main.bicep
