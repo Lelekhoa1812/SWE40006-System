@@ -7,11 +7,13 @@ export class ApiError extends Error {
   }
 }
 
+import { env } from '@/env';
+
 export async function fetchJson<T>(
   path: string,
   init?: globalThis.RequestInit
 ): Promise<T> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const baseUrl = env.NEXT_PUBLIC_API_BASE_URL;
   if (!baseUrl) {
     throw new Error('NEXT_PUBLIC_API_BASE_URL is not set');
   }
