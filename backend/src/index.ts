@@ -2,11 +2,11 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { healthRoutes } from './routes/health';
 import { doctorRoutes } from './routes/doctors';
-import { logger } from './utils/logger';
+import { subscriptionRoutes } from './routes/subscriptions';
 import { env } from './env';
 
 const fastify = Fastify({
-  logger: logger,
+  logger: true,
 });
 
 // Register CORS
@@ -18,6 +18,7 @@ fastify.register(cors, {
 // Register routes
 fastify.register(healthRoutes, { prefix: '' });
 fastify.register(doctorRoutes, { prefix: '/api/v1' });
+fastify.register(subscriptionRoutes, { prefix: '/api/v1' });
 
 const start = async (): Promise<void> => {
   try {

@@ -9,7 +9,7 @@ const EnvSchema = z.object({
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
-  MONGODB_URI: z.string().url().optional(),
+  MONGODB_URI: z.string().min(1).optional(),
 });
 
 export type BackendEnv = z.infer<typeof EnvSchema> & { PORT: number };
