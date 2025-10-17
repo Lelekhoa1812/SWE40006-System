@@ -1,13 +1,7 @@
 import { MongoClient, Db } from 'mongodb';
-import { env } from '../env';
 
-const uri = env.MONGODB_URI;
-
-if (!uri) {
-  throw new Error(
-    'MONGODB_URI was not found in the environment variables. Check your .env file.'
-  );
-}
+const uri =
+  'mongodb+srv://medical-messenger-dev-user:MedicalMessenger@medicalmessengerdev.zgksfb6.mongodb.net/?retryWrites=true&w=majority&appName=MedicalMessengerDev';
 
 let client: MongoClient;
 let dbInstance: Db;
