@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import { ObjectId } from 'mongodb';
 import { getDb } from '../database/client';
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 
 const messageBodySchema = z.object({
   fromUserId: z.string().min(1, 'fromUserId is required'),
@@ -11,6 +11,7 @@ const messageBodySchema = z.object({
 });
 
 export async function messageRoutes(fastify: FastifyInstance) {
+  // Endpoint to create and save a new chat message
   fastify.post(
     '/messages',
     async (
@@ -18,7 +19,9 @@ export async function messageRoutes(fastify: FastifyInstance) {
       reply
     ) => {
       try {
-        const { fromUserId, toUserId, subscriptionId, body } = request.body;
+        const { fromUserId, toUserId, subscriptionId, body } =
+          messageBodySchema.parse(request.body);
+
         const db = await getDb();
         const messages = db.collection('messages');
 
@@ -32,11 +35,18 @@ export async function messageRoutes(fastify: FastifyInstance) {
 
         const result = await messages.insertOne(newMessage);
 
-        reply.code(201).send({
-          message: 'Message saved successfully.',
-          messageId: result.insertedId,
-        });
+        reply
+          .code(201)
+          .send({
+            message: 'Message saved successfully.',
+            messageId: result.insertedId,
+          });
       } catch (error) {
+        if (error instanceof ZodError) {
+          return reply
+            .code(400)
+            .send({ message: 'Invalid request body.', issues: error.issues });
+        }
         fastify.log.error(error, 'Failed to save message');
         reply
           .code(500)
