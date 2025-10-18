@@ -9,6 +9,31 @@ const fastify = Fastify({
   logger: logger,
 });
 
+// Add request logging
+fastify.addHook('onRequest', async (request) => {
+  request.log.info(
+    {
+      method: request.method,
+      url: request.url,
+      userAgent: request.headers['user-agent'],
+      ip: request.ip,
+    },
+    'Incoming request'
+  );
+});
+
+fastify.addHook('onResponse', async (request, reply) => {
+  request.log.info(
+    {
+      method: request.method,
+      url: request.url,
+      statusCode: reply.statusCode,
+      responseTime: reply.getResponseTime(),
+    },
+    'Request completed'
+  );
+});
+
 // Register CORS
 fastify.register(cors, {
   origin: 'http://localhost:3000',
