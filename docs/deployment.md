@@ -1,5 +1,47 @@
 # Deployment Guide
 
+## Automated Deployment Scripts
+
+We provide automated deployment scripts for easy and reproducible deployments:
+
+### Quick Deployment
+
+```bash
+# Full deployment (recommended)
+./deploy.sh
+
+# Debug mode with verbose output
+./deploy.sh --debug
+
+# Deploy specific components
+./deploy.sh --backend-only
+./deploy.sh --frontend-only
+./deploy.sh --blue-only
+./deploy.sh --green-only
+```
+
+### Testing and Monitoring
+
+```bash
+# Check application health
+./debug-deploy.sh health
+
+# Test API endpoints
+./debug-deploy.sh test-apis
+
+# Monitor logs
+./debug-deploy.sh monitor blue
+./debug-deploy.sh logs green
+
+# Run performance tests
+./debug-deploy.sh performance https://medmsg-blue.azurewebsites.net Blue-Backend
+
+# Check deployment status
+./debug-deploy.sh status
+```
+
+For detailed information about deployment scripts, see [DEPLOYMENT-SCRIPTS.md](./DEPLOYMENT-SCRIPTS.md).
+
 ## Blue-Green Deployment Strategy
 
 ### Overview
