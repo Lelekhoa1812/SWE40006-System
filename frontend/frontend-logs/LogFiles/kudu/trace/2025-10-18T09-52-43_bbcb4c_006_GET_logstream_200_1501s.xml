@@ -1,0 +1,6 @@
+<step title="Incoming Request" date="2025-10-18T09:52:43.666" instance="bbcb4c" url="/logstream" method="GET" type="request" pid="823,1,83" Host="medmsg-frontend.scm.azurewebsites.net" User-Agent="AZURECLI/2.77.0 (PIP)" Accept-Encoding="identity" Authorization="Bea..." x-ms-client-request-id="08c5abf8-ac08-11f0-bb2f-2af8bc5f4b79" X-ARR-LOG-ID="08c5abf8-ac08-11f0-bb2f-2af8bc5f4b79" CLIENT-IP="139.218.109.170:65402" X-SITE-DEPLOYMENT-ID="medmsg-frontend" WAS-DEFAULT-HOSTNAME="medmsg-frontend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/logstream" X-Client-IP="139.218.109.170" X-Client-Port="65402" >
+  <step title="Cleanup Xml Logs" date="2025-10-18T09:52:43.684" /><!-- duration: 10ms -->
+  <step title="LogStreamHandlerMiddleware.Invoke" date="2025-10-18T09:52:43.740" /><!-- duration: 810ms -->
+  <step title="Error occurred" date="2025-10-18T10:17:44.619" type="error" text="LogStreamManager: ProcessRequest end" /><!-- duration: 63ms -->
+  <step title="Outgoing response" date="2025-10-18T10:17:44.868" type="response" statusCode="200" statusText="OK" /><!-- duration: 3ms -->
+</step><!-- duration: 1501216ms -->

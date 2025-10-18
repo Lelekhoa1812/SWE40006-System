@@ -11,7 +11,7 @@ RESOURCE_GROUP="rg-swe40006"
 APP_SERVICE_PLAN="medmsg-plan"
 BACKEND_BLUE="medmsg-blue"
 BACKEND_GREEN="medmsg-green"
-FRONTEND_APP="medmsg-frontend-static"
+FRONTEND_APP="medmsg-frontend"
 
 # Colors for output
 RED='\033[0;31m'
@@ -196,8 +196,12 @@ build_applications() {
         log_info "Building frontend..."
         cd frontend
         pnpm install
-        pnpm build
-        log_success "Frontend built successfully"
+        # Skip build for now - use existing out directory
+        if [ ! -d "out" ]; then
+            log_error "Frontend out directory not found. Please run 'pnpm build' manually first."
+            exit 1
+        fi
+        log_success "Frontend build directory found"
         cd ..
     fi
 }
@@ -229,10 +233,29 @@ create_packages() {
         log_info "Creating frontend package..."
         cd frontend
 
-        # Create static frontend package
-        cd out
-        zip -r ../../frontend-deploy.zip .
+        # Ensure we have the built frontend
+        if [ ! -d "out" ]; then
+            log_error "Frontend build directory 'out' not found. Please run 'pnpm build' first."
+            exit 1
+        fi
+
+        # Create a clean deployment package
+        log_info "Creating deployment package..."
+        
+        # Create a temporary directory for deployment
+        mkdir -p temp-deploy
+        cp static-server.js temp-deploy/
+        cp package-deploy.json temp-deploy/package.json
+        cp -r out temp-deploy/
+        
+        # Install express in the temp directory
+        cd temp-deploy
+        npm install express --production --silent
+        
+        # Create the deployment zip
+        zip -r ../../frontend-deploy.zip . -x "*.git*" "*.DS_Store*"
         cd ..
+        rm -rf temp-deploy
 
         debug "Frontend package contents:"
         if [ "$DEBUG" = true ]; then
@@ -313,6 +336,10 @@ deploy_frontend() {
 
     if az webapp deploy --resource-group "$RESOURCE_GROUP" --name "$FRONTEND_APP" --src-path frontend-deploy.zip --type zip; then
         log_success "Frontend deployed successfully"
+
+        # Configure frontend startup command
+        log_info "Configuring frontend startup command..."
+        az webapp config set --resource-group "$RESOURCE_GROUP" --name "$FRONTEND_APP" --startup-file "node static-server.js"
 
         # Test frontend
         log_info "Testing frontend..."

@@ -146,7 +146,7 @@ az webapp create --resource-group rg-swe40006 --plan medmsg-plan --name medmsg-g
 
 ```bash
 # Build and package backend
-cd backend && zip simple-backend.zip simple-server.js
+cd backend && zip .
 
 # Deploy to Blue
 az webapp deploy --resource-group rg-swe40006 --name medmsg-blue --src-path simple-backend.zip --type zip
@@ -197,7 +197,42 @@ Our deployment strategy exemplifies CI/CD best practices:
 
 - **Backend Blue**: ✅ Deployed and operational at `https://medmsg-blue.azurewebsites.net`
 - **Backend Green**: ✅ Deployed and operational at `https://medmsg-green.azurewebsites.net`
-- **Frontend**: ⚠️ Deployed at `https://medmsg-frontend-static.azurewebsites.net` (static files deployed, but serving default Azure page)
+- **Frontend**: ✅ Deployed and operational at `https://medmsg-frontend.azurewebsites.net`
+
+## Frontend Deployment
+
+The frontend is deployed as a static Next.js export served by a simple Express server.
+
+### Deployment Commands
+
+```bash
+# Build frontend (static export)
+cd frontend && pnpm build
+
+# Deploy frontend using automated script
+./deploy.sh --frontend-only --skip-tests --skip-build
+```
+
+### Frontend Testing
+
+```bash
+# Test frontend health
+curl -s https://medmsg-frontend.azurewebsites.net/health
+
+# Test frontend pages
+curl -s https://medmsg-frontend.azurewebsites.net/
+curl -s https://medmsg-frontend.azurewebsites.net/doctors
+curl -s https://medmsg-frontend.azurewebsites.net/about
+```
+
+### Key Implementation Notes
+
+The frontend deployment uses:
+
+- **Next.js Static Export**: Configured with `output: 'export'` in `next.config.js`
+- **Express Server**: Simple static file server (`static-server.js`) to serve the exported HTML
+- **Middleware Pattern**: Uses `app.use()` middleware instead of route patterns to avoid `path-to-regexp` issues
+- **Health Check Endpoint**: Provides `/health` endpoint for monitoring
 
 ## Test Results
 

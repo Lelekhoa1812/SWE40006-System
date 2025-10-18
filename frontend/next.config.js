@@ -11,6 +11,13 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.(ts|tsx)$/,
+      exclude: /vitest\.config\.ts$/,
+    });
+    return config;
+  },
 };
 
 module.exports = nextConfig;

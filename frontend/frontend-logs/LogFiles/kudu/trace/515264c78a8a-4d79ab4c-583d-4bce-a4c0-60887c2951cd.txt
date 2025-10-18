@@ -1,0 +1,2 @@
+2025-10-18T12:54:11    Error occurred, type: error, text: LogStreamManager: Inside TerminateClient
+2025-10-18T12:54:11    Error occurred, type: error, text: LogStreamManager: Inside Reset

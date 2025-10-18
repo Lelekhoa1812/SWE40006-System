@@ -70,7 +70,7 @@ RESOURCE_GROUP="rg-swe40006"
 APP_SERVICE_PLAN="medmsg-plan"
 BACKEND_BLUE="medmsg-blue"
 BACKEND_GREEN="medmsg-green"
-FRONTEND_APP="medmsg-frontend-static"
+FRONTEND_APP="medmsg-frontend"
 ```
 
 ## Debug Script (`debug-deploy.sh`)

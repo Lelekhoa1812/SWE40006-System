@@ -14,7 +14,8 @@ app.get('/health', (req, res) => {
 });
 
 // Handle client-side routing - serve index.html for all other routes
-app.use((req, res) => {
+// Use a more specific pattern to avoid path-to-regexp issues
+app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'out', 'index.html'));
 });
 
