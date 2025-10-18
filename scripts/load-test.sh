@@ -5,7 +5,7 @@
 
 set -e
 
-BACKEND_URL=${BACKEND_URL:-"http://localhost:4000"}
+BACKEND_URL=${BACKEND_URL:-"https://medmsg-blue.azurewebsites.net"}
 ENDPOINT="/api/v1/doctors"
 
 echo "🚀 Starting load test against $BACKEND_URL$ENDPOINT"

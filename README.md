@@ -110,7 +110,7 @@ Create `.env` files from the provided samples.
 **`/frontend/.env.local`**
 
 ```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+NEXT_PUBLIC_API_BASE_URL=https://medmsg-blue.azurewebsites.net
 ```
 
 **`/backend/.env`**
@@ -133,15 +133,15 @@ In **two terminals**:
 # Terminal 1: backend
 cd backend
 pnpm dev
-# Fastify on http://localhost:4000
-# Try: curl http://localhost:4000/health
+# Fastify on https://medmsg-blue.azurewebsites.net
+# Try: curl https://medmsg-blue.azurewebsites.net/health
 ```
 
 ```bash
 # Terminal 2: frontend
 cd frontend
 pnpm dev
-# Next.js on http://localhost:3000
+# Next.js on https://medmsg-frontend-static.azurewebsites.net
 # Visit /doctors to see directory
 ```
 

@@ -47,7 +47,10 @@ fastify.addHook('onResponse', async (request, reply) => {
 
 // Register CORS
 fastify.register(cors, {
-  origin: 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    'https://medmsg-frontend-static.azurewebsites.net',
+  ],
   credentials: true,
 });
 

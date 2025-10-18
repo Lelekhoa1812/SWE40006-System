@@ -151,6 +151,12 @@ Our deployment strategy exemplifies CI/CD best practices:
 - **Monitoring**: Structured logging and health check endpoints
 - **Reproducible Builds**: PNPM workspaces with locked dependencies
 
+## Current Deployment Status
+
+- **Backend Blue**: ✅ Deployed and operational at `https://medmsg-blue.azurewebsites.net`
+- **Backend Green**: ✅ Deployed and operational at `https://medmsg-green.azurewebsites.net`
+- **Frontend**: ⚠️ Deployed at `https://medmsg-frontend-static.azurewebsites.net` (static files deployed, but serving default Azure page)
+
 ## Test Results
 
 For detailed test results and validation, see [deployment-test.md](./deployment-test.md).

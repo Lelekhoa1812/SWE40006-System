@@ -147,6 +147,27 @@ Using our custom load testing script:
 **Results**:
 
 - ✅ All 10 requests completed successfully
+
+## Frontend Deployment Validation
+
+- **URL**: `https://medmsg-frontend-static.azurewebsites.net`
+
+### Root Page (`/`)
+
+- **Command**: `curl -s https://medmsg-frontend-static.azurewebsites.net/`
+- **Result**: Azure App Service default welcome page (static files deployed but not serving correctly)
+- **Status**: ⚠️ Partial (Files deployed but routing not configured properly)
+
+### Doctors Page (`/doctors`)
+
+- **Command**: `curl -s https://medmsg-frontend-static.azurewebsites.net/doctors`
+- **Result**: Azure App Service default welcome page
+- **Status**: ⚠️ Partial (Files deployed but routing not configured properly)
+
+### Note
+
+The frontend static files have been successfully deployed to Azure App Service, but the application is currently serving the default Azure welcome page instead of the Next.js application. This indicates that the static file routing configuration needs to be adjusted for proper SPA (Single Page Application) support.
+
 - ✅ Average response time: 180ms
 - ✅ No errors or timeouts
 - ✅ Consistent JSON responses
