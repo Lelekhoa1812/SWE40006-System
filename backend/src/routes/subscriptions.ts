@@ -1,7 +1,7 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { ObjectId } from 'mongodb';
 import { getDb } from '../database/client';
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 
 const requestBodySchema = z.object({
   patientId: z.string().min(1),
@@ -13,14 +13,10 @@ const updateBodySchema = z.object({
 });
 
 export async function subscriptionRoutes(fastify: FastifyInstance) {
-  // Endpoint to request a new subscription
-  fastify.post(
-    '/subscriptions/request',
-    async (
-      request: FastifyRequest<{ Body: z.infer<typeof requestBodySchema> }>,
-      reply
-    ) => {
-      const { patientId, doctorId } = request.body;
+  fastify.post('/subscriptions/request', async (request, reply) => {
+    try {
+      const { patientId, doctorId } = requestBodySchema.parse(request.body);
+
       const db = await getDb();
       const subscriptions = db.collection('subscriptions');
 
@@ -31,21 +27,26 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         created_at: new Date(),
       });
 
-      reply.code(201).send({
-        message: 'Subscription requested successfully.',
-        subscriptionId: result.insertedId,
-      });
-    }
-  );
-
-  // Endpoint to approve a subscription
-  fastify.put(
-    '/subscriptions/approve',
-    async (
-      request: FastifyRequest<{ Body: z.infer<typeof updateBodySchema> }>,
       reply
-    ) => {
-      const { subscriptionId } = request.body;
+        .code(201)
+        .send({
+          message: 'Subscription requested successfully.',
+          subscriptionId: result.insertedId.toHexString(),
+        });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return reply
+          .code(400)
+          .send({ message: 'Invalid request body.', issues: error.issues });
+      }
+      fastify.log.error(error, 'Failed to request subscription');
+      reply.code(500).send({ message: 'An error occurred.' });
+    }
+  });
+
+  fastify.put('/subscriptions/approve', async (request, reply) => {
+    try {
+      const { subscriptionId } = updateBodySchema.parse(request.body);
       const db = await getDb();
       const subscriptions = db.collection('subscriptions');
 
@@ -61,17 +62,20 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
       reply
         .code(200)
         .send({ message: 'Subscription status updated to approved.' });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return reply
+          .code(400)
+          .send({ message: 'Invalid request body.', issues: error.issues });
+      }
+      fastify.log.error(error, 'Failed to update subscription');
+      reply.code(500).send({ message: 'An error occurred.' });
     }
-  );
+  });
 
-  // Endpoint to deny a subscription
-  fastify.put(
-    '/subscriptions/deny',
-    async (
-      request: FastifyRequest<{ Body: z.infer<typeof updateBodySchema> }>,
-      reply
-    ) => {
-      const { subscriptionId } = request.body;
+  fastify.put('/subscriptions/deny', async (request, reply) => {
+    try {
+      const { subscriptionId } = updateBodySchema.parse(request.body);
       const db = await getDb();
       const subscriptions = db.collection('subscriptions');
 
@@ -87,6 +91,14 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
       reply
         .code(200)
         .send({ message: 'Subscription status updated to denied.' });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return reply
+          .code(400)
+          .send({ message: 'Invalid request body.', issues: error.issues });
+      }
+      fastify.log.error(error, 'Failed to update subscription');
+      reply.code(500).send({ message: 'An error occurred.' });
     }
-  );
+  });
 }
