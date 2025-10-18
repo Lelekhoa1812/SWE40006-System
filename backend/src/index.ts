@@ -2,11 +2,20 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { healthRoutes } from './routes/health';
 import { doctorRoutes } from './routes/doctors';
-import { logger } from './utils/logger';
 import { env } from './env';
 
 const fastify = Fastify({
-  logger: logger,
+  logger: {
+    level: env.LOG_LEVEL,
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'SYS:standard',
+        ignore: 'pid,hostname',
+      },
+    },
+  },
 });
 
 // Add request logging

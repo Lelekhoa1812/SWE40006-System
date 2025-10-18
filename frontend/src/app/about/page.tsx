@@ -49,7 +49,7 @@ export default function AboutPage() {
                   2. Request Subscription
                 </h3>
                 <p className="text-gray-600">
-                  Send subscription requests to doctors you'd like to
+                  Send subscription requests to doctors you&apos;d like to
                   communicate with. Doctors can approve or decline based on
                   their availability.
                 </p>
@@ -59,8 +59,8 @@ export default function AboutPage() {
                   3. Secure Communication
                 </h3>
                 <p className="text-gray-600">
-                  Once approved, communicate directly with your chosen
-                  specialists through our secure messaging platform.
+                  Once approved, communicate directly with your chosen doctors
+                  through our secure messaging platform.
                 </p>
               </div>
             </CardContent>
@@ -75,23 +75,21 @@ export default function AboutPage() {
                 We take your privacy seriously. All communications are
                 encrypted, and we follow strict data protection protocols. Your
                 health information is never shared without your explicit
-                consent, and all interactions are logged for security purposes
-                while maintaining patient confidentiality.
+                consent, and we comply with all relevant healthcare privacy
+                regulations.
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Current Status</CardTitle>
+              <CardTitle>Contact Us</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">
-                Medical Messenger is currently in MVP (Minimum Viable Product)
-                phase. We're building the foundation with doctor discovery,
-                subscription management, and secure communication features.
-                Future updates will include real-time chat, appointment
-                scheduling, and advanced privacy controls.
+                Have questions or need support? We&apos;re here to help. Reach
+                out to our support team for assistance with your account or any
+                technical issues.
               </p>
             </CardContent>
           </Card>
