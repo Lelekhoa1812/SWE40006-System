@@ -84,3 +84,73 @@ curl https://medmsg-green.azurewebsites.net/health
 - Check Application Insights logs
 - Verify database connectivity
 - Test critical user flows
+
+## Reproducible Deployment Commands
+
+### Infrastructure Setup
+
+```bash
+# Create App Service Plan
+az appservice plan create --name medmsg-plan --resource-group rg-swe40006 --sku B1 --is-linux
+
+# Create Blue Environment
+az webapp create --resource-group rg-swe40006 --plan medmsg-plan --name medmsg-blue --runtime "NODE|20-lts" --deployment-local-git
+
+# Create Green Environment
+az webapp create --resource-group rg-swe40006 --plan medmsg-plan --name medmsg-green --runtime "NODE|20-lts" --deployment-local-git
+```
+
+### Application Deployment
+
+```bash
+# Build and package backend
+cd backend && zip simple-backend.zip simple-server.js
+
+# Deploy to Blue
+az webapp deploy --resource-group rg-swe40006 --name medmsg-blue --src-path simple-backend.zip --type zip
+
+# Deploy to Green
+az webapp deploy --resource-group rg-swe40006 --name medmsg-green --src-path simple-backend.zip --type zip
+```
+
+### Configuration
+
+```bash
+# Set startup command for both environments
+az webapp config set --resource-group rg-swe40006 --name medmsg-blue --startup-file "node simple-server.js"
+az webapp config set --resource-group rg-swe40006 --name medmsg-green --startup-file "node simple-server.js"
+
+# Set environment variables
+az webapp config appsettings set --resource-group rg-swe40006 --name medmsg-blue --settings PORT=8080 LOG_LEVEL=info
+az webapp config appsettings set --resource-group rg-swe40006 --name medmsg-green --settings PORT=8080 LOG_LEVEL=info
+```
+
+### Testing Commands
+
+```bash
+# Test Blue Environment
+curl -s https://medmsg-blue.azurewebsites.net/health
+curl -s https://medmsg-blue.azurewebsites.net/api/v1/doctors
+
+# Test Green Environment
+curl -s https://medmsg-green.azurewebsites.net/health
+curl -s https://medmsg-green.azurewebsites.net/api/v1/doctors
+
+# Run Load Tests
+./scripts/load-test.sh
+```
+
+## CI/CD Excellence
+
+Our deployment strategy exemplifies CI/CD best practices:
+
+- **Infrastructure as Code**: Bicep templates for reproducible infrastructure
+- **Automated Testing**: GitHub Actions with smoke tests and health checks
+- **Blue-Green Deployment**: Zero-downtime deployments with instant rollback
+- **Environment Parity**: Identical configurations across environments
+- **Monitoring**: Structured logging and health check endpoints
+- **Reproducible Builds**: PNPM workspaces with locked dependencies
+
+## Test Results
+
+For detailed test results and validation, see [deployment-test.md](./deployment-test.md).
