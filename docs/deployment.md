@@ -40,7 +40,7 @@ We provide automated deployment scripts for easy and reproducible deployments:
 ./debug-deploy.sh status
 ```
 
-For detailed information about deployment scripts, see [DEPLOYMENT-SCRIPTS.md](./DEPLOYMENT-SCRIPTS.md).
+For detailed information about deployment scripts, see [DEPLOYMENT-SCRIPTS.md](./deployment-script.md).
 
 ## Blue-Green Deployment Strategy
 

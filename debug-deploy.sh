@@ -9,7 +9,7 @@ set -e
 RESOURCE_GROUP="rg-swe40006"
 BACKEND_BLUE="medmsg-blue"
 BACKEND_GREEN="medmsg-green"
-FRONTEND_APP="medmsg-frontend-static"
+FRONTEND_APP="medmsg-frontend"
 
 # Colors for output
 RED='\033[0;31m'

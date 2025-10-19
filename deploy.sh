@@ -241,17 +241,17 @@ create_packages() {
 
         # Create a clean deployment package
         log_info "Creating deployment package..."
-        
+
         # Create a temporary directory for deployment
         mkdir -p temp-deploy
         cp static-server.js temp-deploy/
         cp package-deploy.json temp-deploy/package.json
         cp -r out temp-deploy/
-        
+
         # Install express in the temp directory
         cd temp-deploy
         npm install express --production --silent
-        
+
         # Create the deployment zip
         zip -r ../../frontend-deploy.zip . -x "*.git*" "*.DS_Store*"
         cd ..
