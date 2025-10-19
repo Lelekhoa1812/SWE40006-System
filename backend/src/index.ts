@@ -2,11 +2,12 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { healthRoutes } from './routes/health';
 import { doctorRoutes } from './routes/doctors';
-import { logger } from './utils/logger';
+//import { logger } from './utils/logger';
 import { env } from './env';
 
 const fastify = Fastify({
-  logger: logger,
+  //For testing purposes, true was changed from logger
+  logger: true,
 });
 
 // Register CORS

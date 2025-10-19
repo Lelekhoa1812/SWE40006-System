@@ -13,12 +13,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchJson } from '@/lib/api';
+// import { fetchJson } from '@/lib/api';
 import type { Doctor } from '@/types/doctor';
 import { DoctorCard } from '@/components/doctor-card';
 
 const specialties = [
-  'All Specialties',
+  '-- Select a specialty--',
   'Cardiology',
   'Dermatology',
   'Endocrinology',
@@ -46,17 +46,243 @@ const DoctorCardSkeleton = () => (
 
 export default function DoctorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSpecialty, setSelectedSpecialty] = useState('All Specialties');
+  const [selectedSpecialty, setSelectedSpecialty] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
 
   const loadDoctors = useCallback(async () => {
+    console.log('loading docs');
     setError(null);
     setIsLoading(true);
     try {
-      const data = await fetchJson<Doctor[]>('/api/v1/doctors');
-      setDoctors(data);
+      // const data = await fetchJson<Doctor[]>('/api/v1/doctors');
+      const data: Doctor[] = [
+        {
+          id: '1',
+          name: 'Dr. Emily Carter',
+          specialty: 'Cardiology',
+          email: 'emily.carter@healthcare.com',
+          phone: '+61 412 345 678',
+          experience: 12,
+          rating: 4.8,
+          bio: 'Experienced cardiologist with a passion for preventive care and patient education.',
+          availability: 'Mon-Fri 9am-5pm',
+        },
+        {
+          id: '2',
+          name: 'Dr. Rajiv Menon',
+          specialty: 'Neurology',
+          email: 'rajiv.menon@neuroclinic.com',
+          phone: '+61 423 987 654',
+          experience: 15,
+          rating: 4.6,
+          bio: 'Specialist in neurological disorders with a focus on epilepsy and stroke recovery.',
+          availability: 'Tue-Thu 10am-4pm',
+        },
+        {
+          id: '3',
+          name: 'Dr. Sarah Nguyen',
+          specialty: 'Psychiatry',
+          email: 'sarah.nguyen@kidshealth.com',
+          phone: '+61 400 123 456',
+          experience: 8,
+          rating: 4.9,
+          bio: 'Pediatrician dedicated to child wellness and developmental milestones.',
+          availability: 'Mon, Wed, Fri 8am-2pm',
+        },
+        {
+          id: '4',
+          name: "Dr. James O'Connor",
+          specialty: 'Orthopedics',
+          email: 'james.oconnor@bonecare.com',
+          phone: '+61 455 678 901',
+          experience: 10,
+          rating: 4.7,
+          bio: 'Orthopedic surgeon with expertise in sports injuries and joint replacement.',
+          availability: 'Mon-Fri 10am-6pm',
+        },
+        {
+          id: '5',
+          name: 'Dr. Aisha Khan',
+          specialty: 'Dermatology',
+          email: 'aisha.khan@skincareclinic.com',
+          phone: '+61 499 321 654',
+          experience: 6,
+          rating: 4.5,
+          bio: 'Dermatologist focused on acne treatment, skin cancer screening, and cosmetic dermatology.',
+          availability: 'Tue, Thu 11am-5pm',
+        },
+        {
+          id: '6',
+          name: 'Dr. Leo Tanaka',
+          specialty: 'Endocrinology',
+          email: 'leo.tanaka@endoclinic.com',
+          phone: '+61 411 234 567',
+          experience: 9,
+          rating: 4.4,
+          bio: 'Expert in hormonal disorders and diabetes management.',
+          availability: 'Mon-Wed 9am-3pm',
+        },
+        {
+          id: '7',
+          name: 'Dr. Mia Thompson',
+          specialty: 'Gastroenterology',
+          email: 'mia.thompson@guthealth.com',
+          phone: '+61 422 345 678',
+          experience: 11,
+          rating: 4.7,
+          bio: 'Focused on digestive health and minimally invasive procedures.',
+          availability: 'Tue-Fri 10am-4pm',
+        },
+        {
+          id: '8',
+          name: 'Dr. Oliver Grant',
+          specialty: 'Oncology',
+          email: 'oliver.grant@cancercenter.com',
+          phone: '+61 433 456 789',
+          experience: 14,
+          rating: 4.8,
+          bio: 'Specialist in cancer treatment and patient support.',
+          availability: 'Mon-Fri 8am-5pm',
+        },
+        {
+          id: '9',
+          name: 'Dr. Chloe Martin',
+          specialty: 'Psychiatry',
+          email: 'chloe.martin@mentalwellness.com',
+          phone: '+61 444 567 890',
+          experience: 7,
+          rating: 4.6,
+          bio: 'Committed to mental health care and therapy.',
+          availability: 'Mon, Wed, Fri 9am-1pm',
+        },
+        {
+          id: '10',
+          name: 'Dr. Ethan Wright',
+          specialty: 'Dermatology',
+          email: 'ethan.wright@uroclinic.com',
+          phone: '+61 455 678 901',
+          experience: 10,
+          rating: 4.5,
+          bio: 'Experienced in urinary tract and male reproductive health.',
+          availability: 'Tue-Thu 11am-6pm',
+        },
+        {
+          id: '11',
+          name: 'Dr. Grace Lin',
+          specialty: 'Dermatology',
+          email: 'grace.lin@jointcare.com',
+          phone: '+61 466 789 012',
+          experience: 13,
+          rating: 4.9,
+          bio: 'Treats autoimmune and joint disorders with a holistic approach.',
+          availability: 'Mon-Fri 9am-4pm',
+        },
+        {
+          id: '12',
+          name: 'Dr. Max Patel',
+          specialty: 'Psychiatry',
+          email: 'max.patel@lungclinic.com',
+          phone: '+61 477 890 123',
+          experience: 8,
+          rating: 4.3,
+          bio: 'Focuses on respiratory conditions and asthma management.',
+          availability: 'Mon, Thu 10am-3pm',
+        },
+        {
+          id: '13',
+          name: 'Dr. Lily Roberts',
+          specialty: 'Neurology',
+          email: 'lily.roberts@eyecare.com',
+          phone: '+61 488 901 234',
+          experience: 6,
+          rating: 4.6,
+          bio: 'Provides eye exams and surgical treatments for vision issues.',
+          availability: 'Tue-Fri 9am-5pm',
+        },
+        {
+          id: '14',
+          name: 'Dr. Noah Kim',
+          specialty: 'Oncology',
+          email: 'noah.kim@bloodcenter.com',
+          phone: '+61 499 012 345',
+          experience: 12,
+          rating: 4.7,
+          bio: 'Specialist in blood disorders and transfusion medicine.',
+          availability: 'Mon-Wed 8am-2pm',
+        },
+        {
+          id: '15',
+          name: 'Dr. Ava Singh',
+          specialty: 'Neurology',
+          email: 'ava.singh@womenshealth.com',
+          phone: '+61 400 123 456',
+          experience: 10,
+          rating: 4.8,
+          bio: "Dedicated to women's health and prenatal care.",
+          availability: 'Mon-Fri 10am-4pm',
+        },
+        {
+          id: '16',
+          name: 'Dr. Jack Wilson',
+          specialty: 'Radiology',
+          email: 'jack.wilson@imagingcenter.com',
+          phone: '+61 411 234 567',
+          experience: 9,
+          rating: 4.4,
+          bio: 'Expert in diagnostic imaging and interpretation.',
+          availability: 'Tue-Thu 9am-5pm',
+        },
+        {
+          id: '17',
+          name: 'Dr. Zoe Adams',
+          specialty: 'Endocrinology',
+          email: 'zoe.adams@labservices.com',
+          phone: '+61 422 345 678',
+          experience: 11,
+          rating: 4.5,
+          bio: 'Analyzes lab results to support accurate diagnoses.',
+          availability: 'Mon-Fri 8am-3pm',
+        },
+        {
+          id: '18',
+          name: 'Dr. Lucas Bennett',
+          specialty: 'Endocrinology',
+          email: 'lucas.bennett@kidneycare.com',
+          phone: '+61 433 456 789',
+          experience: 10,
+          rating: 4.6,
+          bio: 'Focuses on kidney health and dialysis treatment.',
+          availability: 'Mon, Wed, Fri 10am-2pm',
+        },
+        {
+          id: '19',
+          name: 'Dr. Isla Murphy',
+          specialty: 'Endocrinology',
+          email: 'isla.murphy@allergyclinic.com',
+          phone: '+61 444 567 890',
+          experience: 7,
+          rating: 4.7,
+          bio: 'Treats allergies and immune system disorders.',
+          availability: 'Tue-Thu 9am-1pm',
+        },
+        {
+          id: '20',
+          name: 'Dr. Henry Cooper',
+          specialty: 'Oncology',
+          email: 'henry.cooper@gpclinic.com',
+          phone: '+61 455 678 901',
+          experience: 5,
+          rating: 4.2,
+          bio: 'Provides comprehensive primary care and health screenings.',
+          availability: 'Mon-Fri 8am-6pm',
+        },
+      ];
+
+      setTimeout(() => {
+        setDoctors(data);
+      }, 2000);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to load doctors';
       setError(message);
@@ -80,9 +306,7 @@ export default function DoctorsPage() {
         ? d.name.toLowerCase().includes(term) ||
           d.specialty.toLowerCase().includes(term)
         : true;
-      const matchesSpecialty =
-        selectedSpecialty === 'All Specialties' ||
-        d.specialty === selectedSpecialty;
+      const matchesSpecialty = d.specialty === selectedSpecialty;
       return matchesTerm && matchesSpecialty;
     });
   }, [doctors, searchTerm, selectedSpecialty]);
@@ -106,7 +330,7 @@ export default function DoctorsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search by name, location, or specialty..."
+                  placeholder="Search by name  ..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -150,13 +374,21 @@ export default function DoctorsPage() {
               !error &&
               (filteredDoctors.length === 0 ? (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500">No doctors found.</p>
+                  <p className="text-gray-500">No results found.</p>
+                  <p className="text-gray-500">
+                    Select a specialty and optionally to narrow down the results
+                    search by a name.
+                  </p>
                 </div>
               ) : (
                 filteredDoctors.map((doctor) => (
                   <DoctorCard key={doctor.id} doctor={doctor} />
                 ))
               ))}
+
+            <div>
+              {filteredDoctors.length}/{doctors.length}
+            </div>
           </div>
         </div>
       </div>

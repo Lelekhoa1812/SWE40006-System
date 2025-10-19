@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import DoctorsPage from '../page';
-import { vi } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
 vi.mock('@/lib/api', () => ({
   fetchJson: vi.fn().mockResolvedValue([

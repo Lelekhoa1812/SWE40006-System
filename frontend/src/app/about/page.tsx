@@ -49,7 +49,7 @@ export default function AboutPage() {
                   2. Request Subscription
                 </h3>
                 <p className="text-gray-600">
-                  Send subscription requests to doctors you'd like to
+                  Send subscription requests to doctors you&apos;d like to
                   communicate with. Doctors can approve or decline based on
                   their availability.
                 </p>
@@ -88,7 +88,7 @@ export default function AboutPage() {
             <CardContent>
               <p className="text-gray-600">
                 Medical Messenger is currently in MVP (Minimum Viable Product)
-                phase. We're building the foundation with doctor discovery,
+                phase. We&apos;re building the foundation with doctor discovery,
                 subscription management, and secure communication features.
                 Future updates will include real-time chat, appointment
                 scheduling, and advanced privacy controls.
