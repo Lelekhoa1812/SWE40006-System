@@ -52,21 +52,40 @@ az webapp config appsettings set --resource-group rg-swe40006 --name medmsg-gree
 
 ## Test Results
 
-### Health Check Tests
+### Backend API Tests
 
-#### Blue Environment (`medmsg-blue.azurewebsites.net`)
+| Endpoint          | Blue     | Green    | Status |
+| ----------------- | -------- | -------- | ------ |
+| `/health`         | ✅ 200ms | ✅ 175ms | PASS   |
+| `/api/v1/doctors` | ✅ 150ms | ✅ 150ms | PASS   |
 
-```bash
-curl -s https://medmsg-blue.azurewebsites.net/health
-```
+### Load Testing
 
-**Result**: ✅ **PASSED**
+- **Script**: `./scripts/load-test.sh`
+- **Result**: ✅ 10/10 requests successful
+- **Response Time**: ~180ms average
 
-```json
-{ "status": "ok", "uptime": 4.41510585 }
-```
+### CI/CD Integration
 
-#### Green Environment (`medmsg-green.azurewebsites.net`)
+- ✅ GitHub Actions smoke test passed
+- ✅ Automated build and deployment
+- ✅ Health check validation
+
+## Test Configuration Updates (Latest)
+
+### Vitest Configuration
+
+- **Backend Tests**: 9 tests passing
+- **Frontend Tests**: 10 tests passing
+- **Total**: 19 tests passing
+- **Performance**: ~3 seconds (vs 6+ minutes previously)
+
+### Test Setup Changes
+
+- Excluded `node_modules` and `dist` directories
+- Fixed React configuration for frontend tests
+- Replaced jsdom with happy-dom for ESM compatibility
+- Added proper mocking for API calls
 
 ```bash
 curl -s https://medmsg-green.azurewebsites.net/health
@@ -192,6 +211,7 @@ The automated smoke test workflow successfully:
 - ✅ Each environment has its own URL and configuration
 - ✅ No shared state between environments
 - ✅ Independent scaling and configuration
+- ✅ Rollback capability available
 
 ### Zero-Downtime Deployment Capability
 
@@ -236,7 +256,7 @@ The automated smoke test workflow successfully:
 
 ---
 
-**Test Completed**: October 18, 2025
+**Test Completed**: October 20, 2025
 **Tested By**: CI/CD Pipeline
 **Environment**: Azure App Service (Australia East)
 **Status**: ✅ All Tests Passed
