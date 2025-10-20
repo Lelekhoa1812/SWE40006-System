@@ -4,7 +4,7 @@ import { healthRoutes } from './routes/health.js';
 import { doctorRoutes } from './routes/doctors.js';
 import { subscriptionRoutes } from './routes/subscriptions.js';
 import { messageRoutes } from './routes/messages.js';
-import { env } from './env';
+import { env } from './env.js';
 
 const fastify = Fastify({
   logger: {
