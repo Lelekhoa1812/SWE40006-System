@@ -6,7 +6,7 @@ on:
     paths:
       - 'backend/**'
   push:
-    branches: [main]
+    branches: [main, feature/ci-pipeline]
     paths:
       - 'backend/**'
 
@@ -20,8 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: 20
 
       - name: Install pnpm
         run: corepack enable
@@ -29,14 +28,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build backend
+      - name: Build and start backend server
         run: |
           cd backend
           pnpm build
-
-      - name: Start backend server
-        run: |
-          cd backend
           pnpm start &
           sleep 5
 
