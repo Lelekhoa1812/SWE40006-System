@@ -28,14 +28,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build backend
+      - name: Build and start backend server
         run: |
           cd backend
           pnpm build
-
-      - name: Start backend server
-        run: |
-          cd backend
           pnpm start &
           sleep 5
 
