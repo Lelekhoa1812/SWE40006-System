@@ -3,6 +3,7 @@ name: smoke-test
 on:
   workflow_dispatch:
   pull_request:
+    branches: [main]
     paths:
       - 'backend/**'
   push:
@@ -23,7 +24,12 @@ jobs:
           node-version: 20
 
       - name: Install pnpm
-        run: corepack enable
+        run: npm install -g pnpm
+
+      - name: Enable Corepack and activate pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
 
       - name: Install dependencies
         run: pnpm install

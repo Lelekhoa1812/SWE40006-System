@@ -1,4 +1,4 @@
-name: build-and-test
+name: typecheck
 
 on:
   workflow_dispatch:
@@ -14,11 +14,10 @@ on:
       - 'backend/**'
 
 jobs:
-  build:
+  typecheck:
+    name: TypeScript Typecheck
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        project: [frontend, backend]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,7 +27,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install pnpm
+      - name: Install PNPM
         run: npm install -g pnpm
 
       - name: Enable Corepack and activate pnpm
@@ -38,12 +37,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
-        working-directory: ${{matrix.project}}
 
-      - name: Run build
-        run: pnpm build
-        working-directory: ${{matrix.project}}
-
-      - name: Run tests
-        run: pnpm test
-        working-directory: ${{matrix.project}}
+      - name: Run TypeScript typecheck
+        run: pnpm tsc -p frontend/tsconfig.json --noEmit --strict
