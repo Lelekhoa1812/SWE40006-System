@@ -39,4 +39,5 @@ jobs:
         run: pnpm install
 
       - name: Run TypeScript typecheck
-        run: pnpm tsc -p frontend/tsconfig.json --noEmit --strict
+        run: pnpm tsc --build --noEmit
+
