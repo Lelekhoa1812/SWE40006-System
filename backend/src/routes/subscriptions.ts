@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { ObjectId } from 'mongodb';
-import { getDb } from '../database/client';
+import { getDb } from '../database/client.js';
 import { z, ZodError } from 'zod';
 
 const requestBodySchema = z.object({
@@ -27,12 +27,10 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         created_at: new Date(),
       });
 
-      reply
-        .code(201)
-        .send({
-          message: 'Subscription requested successfully.',
-          subscriptionId: result.insertedId.toHexString(),
-        });
+      reply.code(201).send({
+        message: 'Subscription requested successfully.',
+        subscriptionId: result.insertedId.toHexString(),
+      });
     } catch (error) {
       if (error instanceof ZodError) {
         return reply
