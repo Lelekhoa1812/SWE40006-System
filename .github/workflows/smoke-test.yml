@@ -3,10 +3,11 @@ name: smoke-test
 on:
   workflow_dispatch:
   pull_request:
+    branches: [main]
     paths:
       - 'backend/**'
   push:
-    branches: [main, feature/ci-pipeline]
+    branches: [main]
     paths:
       - 'backend/**'
 
