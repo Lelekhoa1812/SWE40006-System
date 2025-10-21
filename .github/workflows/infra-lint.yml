@@ -3,6 +3,7 @@ name: infra-lint
 on:
   workflow_dispatch:
   pull_request:
+    branches: [main]
     paths:
       - 'infra/**'
   push:
