@@ -12,22 +12,15 @@ module.exports = {
       jsx: true,
     },
   },
-  plugins: ['@typescript-eslint', 'react', 'jsx-a11y'],
+  plugins: ['@typescript-eslint'],
   extends: [
     'eslint:recommended',
-    'plugin:react/recommended',
-    'plugin:jsx-a11y/recommended',
     'plugin:@typescript-eslint/recommended',
     'next/core-web-vitals',
     'prettier',
   ],
-  settings: {
-    react: {
-      version: 'detect',
-    },
-  },
   rules: {
-    'react/react-in-jsx-scope': 'off',
+    'react/react-in-jsx-scope': 'off', // still fine to keep
   },
   ignorePatterns: ['node_modules/', '.next/', 'dist/'],
 };

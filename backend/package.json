@@ -5,7 +5,7 @@
   "private": true,
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --require dotenv/config src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest",
@@ -15,8 +15,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fastify/cors": "^11.1.0",
-    "fastify": "^5.6.1",
+    "@fastify/cors": "^8.5.0",
+    "dotenv": "^17.2.3",
+    "fastify": "^4.29.1",
+    "mongodb": "^6.20.0",
     "pino": "^8.16.2",
     "pino-pretty": "^10.2.3",
     "zod": "^3.22.4"

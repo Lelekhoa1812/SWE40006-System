@@ -22,7 +22,7 @@ This package implements the Medical Messenger web UI using Next.js (App Router) 
 Create `./.env.local`:
 
 ```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+NEXT_PUBLIC_API_BASE_URL=https://medmsg-blue.azurewebsites.net
 ```
 
 ## Testing
