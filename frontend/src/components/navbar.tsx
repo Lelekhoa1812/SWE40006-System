@@ -40,10 +40,14 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-            <Button size="sm">Get Started</Button>
+            <Link href="/signin" passHref>
+              <Button variant="outline" size="sm">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/signup" passHref>
+              <Button size="sm">Get Started</Button>
+            </Link>
           </div>
         </div>
       </div>

@@ -57,3 +57,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.flex-auto {
+  flex: auto;
+}
+
+.gap-2 {
+  gap: 0.4rem
+}
+
+.textbox {
+  width: 200px;
+}
+
+.textarea {
+  width: 300px;
+  height: 150px;
+}

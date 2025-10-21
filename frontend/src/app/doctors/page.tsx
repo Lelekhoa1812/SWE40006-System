@@ -50,6 +50,8 @@ export default function DoctorsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const loadDoctors = useCallback(async () => {
     console.log('loading docs');
@@ -278,11 +280,75 @@ export default function DoctorsPage() {
           bio: 'Provides comprehensive primary care and health screenings.',
           availability: 'Mon-Fri 8am-6pm',
         },
+        {
+          id: '21',
+          name: 'Dr. Priya Nair',
+          specialty: 'Oncology',
+          email: 'priya.nair@oncocare.com',
+          phone: '+61 412 345 678',
+          experience: 12,
+          rating: 4.8,
+          bio: 'Specializes in breast and gynecologic cancers with a focus on patient-centered care.',
+          availability: 'Mon-Wed 9am-5pm, Fri 10am-4pm',
+        },
+        {
+          id: '22',
+          name: 'Dr. Marcus Lee',
+          specialty: 'Oncology',
+          email: 'marcus.lee@healthfirst.com',
+          phone: '+61 423 987 654',
+          experience: 8,
+          rating: 4.5,
+          bio: 'Expert in immunotherapy and targeted treatments for lung and colorectal cancers.',
+          availability: 'Tue-Thu 8am-6pm',
+        },
+        {
+          id: '23',
+          name: 'Dr. Aisha Rahman',
+          specialty: 'Oncology',
+          email: 'aisha.rahman@medixclinic.com',
+          phone: '+61 400 111 222',
+          experience: 15,
+          rating: 4.9,
+          bio: 'Renowned for her work in hematologic malignancies and clinical trials.',
+          availability: 'Mon-Fri 9am-5pm',
+        },
+        {
+          id: '24',
+          name: 'Dr. Daniel Wong',
+          specialty: 'Oncology',
+          email: 'daniel.wong@cancerhub.org',
+          phone: '+61 466 333 444',
+          experience: 6,
+          rating: 4.3,
+          bio: 'Focuses on early detection and multidisciplinary treatment planning for prostate cancer.',
+          availability: 'Mon, Wed, Fri 8am-4pm',
+        },
+        {
+          id: '25',
+          name: 'Dr. Emily Tran',
+          specialty: 'Oncology',
+          email: 'emily.tran@lifecare.com',
+          phone: '+61 477 555 666',
+          experience: 10,
+          rating: 4.7,
+          bio: 'Dedicated to supportive oncology and survivorship programs for long-term patient wellness.',
+          availability: 'Tue-Fri 9am-6pm',
+        },
+        {
+          id: '26',
+          name: 'Dr. Julian Tran',
+          specialty: 'Oncology',
+          email: 'julian.tran@lifecare.com',
+          phone: '+61 477 555 666',
+          experience: 8,
+          rating: 4.2,
+          bio: 'Dedicated to supportive oncology and survivorship programs for long-term patient wellness.',
+          availability: 'Tue-Thu 9am-6pm',
+        },
       ];
 
-      setTimeout(() => {
-        setDoctors(data);
-      }, 2000);
+      setDoctors(data);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to load doctors';
       setError(message);
@@ -310,6 +376,18 @@ export default function DoctorsPage() {
       return matchesTerm && matchesSpecialty;
     });
   }, [doctors, searchTerm, selectedSpecialty]);
+
+  const totalPages = Math.ceil(filteredDoctors.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentDoctors = filteredDoctors.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -372,7 +450,7 @@ export default function DoctorsPage() {
 
             {!isLoading &&
               !error &&
-              (filteredDoctors.length === 0 ? (
+              (currentDoctors.length === 0 ? (
                 <div className="col-span-full text-center py-12">
                   <p className="text-gray-500">No results found.</p>
                   <p className="text-gray-500">
@@ -381,13 +459,23 @@ export default function DoctorsPage() {
                   </p>
                 </div>
               ) : (
-                filteredDoctors.map((doctor) => (
+                currentDoctors.map((doctor) => (
                   <DoctorCard key={doctor.id} doctor={doctor} />
                 ))
               ))}
+          </div>
 
-            <div>
-              {filteredDoctors.length}/{doctors.length}
+          <div className="flex">
+            <div className="flex flex-auto justify-end gap-2">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <Button
+                  key={i}
+                  variant={i + 1 === currentPage ? 'default' : 'outline'}
+                  onClick={() => handlePageChange(i + 1)}
+                >
+                  {i + 1}
+                </Button>
+              ))}
             </div>
           </div>
         </div>
