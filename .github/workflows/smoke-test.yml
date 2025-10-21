@@ -3,6 +3,7 @@ name: smoke-test
 on:
   workflow_dispatch:
   pull_request:
+    branches: [main]
     paths:
       - 'backend/**'
   push:
