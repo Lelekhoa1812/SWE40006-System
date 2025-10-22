@@ -22,10 +22,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/health') {
+  // Parse URL to handle query parameters
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = url.pathname;
+
+  if (pathname === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() }));
-  } else if (req.url === '/api/v1/doctors') {
+  } else if (pathname === '/api/v1/doctors') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(
       JSON.stringify([
@@ -42,12 +46,26 @@ const server = http.createServer((req, res) => {
         },
       ])
     );
-  } else if (req.url === '/api/v1/auth/me') {
+  } else if (pathname === '/api/v1/auth/me') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not authenticated' }));
+  } else if (pathname === '/api/v1/auth/register') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        message: 'Registration endpoint - not implemented in simple server',
+      })
+    );
+  } else if (pathname === '/api/v1/auth/login') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        message: 'Login endpoint - not implemented in simple server',
+      })
+    );
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Not found' }));
+    res.end(JSON.stringify({ error: 'Not found', path: pathname }));
   }
 });
 
