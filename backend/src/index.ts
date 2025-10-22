@@ -8,7 +8,8 @@ import { subscriptionRoutes } from './routes/subscriptions';
 import { messageRoutes } from './routes/messages';
 import { authRoutes } from './routes/auth';
 import { env } from './env';
-import { connectToDatabase } from './database/connection';
+import { connectDatabase } from './database/connection';
+import { setupSocketIO } from './socket/socketHandler';
 
 const fastify = Fastify({
   logger: {
@@ -82,11 +83,15 @@ fastify.register(messageRoutes, { prefix: '/api/v1' });
 const start = async (): Promise<void> => {
   try {
     // Connect to database
-    await connectToDatabase(fastify.log);
+    await connectDatabase();
 
     const port = env.PORT;
     await fastify.listen({ port, host: '0.0.0.0' });
     fastify.log.info(`Server listening on port ${port}`);
+
+    // Setup Socket.IO after server is ready
+    setupSocketIO(fastify);
+    fastify.log.info('Socket.IO server initialized');
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

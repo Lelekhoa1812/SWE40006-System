@@ -1,4 +1,4 @@
-import { connectToDatabase } from '../database/connection';
+import { connectDatabase } from '../database/connection';
 import { Doctor } from '../database/models/Doctor';
 import bcrypt from 'bcryptjs';
 
@@ -335,17 +335,7 @@ async function seedDoctors() {
     console.log('🌱 Starting doctor seeding...');
 
     // Connect to database
-    await connectToDatabase({
-      info: console.log,
-      error: console.error,
-      warn: console.warn,
-      fatal: console.error,
-    } as {
-      info: (msg: string) => void;
-      error: (msg: string) => void;
-      warn: (msg: string) => void;
-      fatal: (msg: string) => void;
-    });
+    await connectDatabase();
 
     // Clear existing doctors
     await Doctor.deleteMany({});

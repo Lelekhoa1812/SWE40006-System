@@ -1,123 +1,82 @@
 {
-  "name": "Message",
-  "description": "Message schema for chat communications",
-  "fields": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Message",
+  "description": "Chat message between patient and doctor",
+  "type": "object",
+  "properties": {
     "id": {
       "type": "string",
-      "description": "Unique message identifier",
-      "required": true,
-      "index": "unique"
+      "description": "Unique message identifier"
     },
-    "chatId": {
+    "subscriptionId": {
       "type": "string",
-      "description": "ID of the chat this message belongs to",
-      "required": true,
-      "index": "index"
+      "description": "ID of the subscription this message belongs to"
     },
-    "senderId": {
+    "fromUserId": {
       "type": "string",
-      "description": "ID of the user who sent the message",
-      "required": true,
-      "index": "index"
+      "description": "ID of the user who sent the message"
+    },
+    "toUserId": {
+      "type": "string",
+      "description": "ID of the user who should receive the message"
     },
     "content": {
       "type": "string",
-      "description": "Message content",
-      "required": true,
-      "maxLength": 5000
+      "maxLength": 2000,
+      "description": "Message content"
     },
-    "type": {
+    "messageType": {
       "type": "string",
-      "description": "Type of message",
-      "required": true,
       "enum": ["text", "image", "file", "system"],
-      "default": "text"
+      "default": "text",
+      "description": "Type of message"
     },
-    "attachments": {
-      "type": "array",
-      "description": "Message attachments",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "required": true
-          },
-          "filename": {
-            "type": "string",
-            "required": true
-          },
-          "mimeType": {
-            "type": "string",
-            "required": true
-          },
-          "size": {
-            "type": "number",
-            "minimum": 0
-          },
-          "url": {
-            "type": "string",
-            "format": "uri"
-          }
-        }
-      }
-    },
-    "isRead": {
-      "type": "boolean",
-      "description": "Whether the message has been read",
-      "default": false,
-      "index": "index"
-    },
-    "readAt": {
+    "status": {
       "type": "string",
-      "format": "date-time",
-      "description": "When the message was read"
-    },
-    "editedAt": {
-      "type": "string",
-      "format": "date-time",
-      "description": "When the message was last edited"
-    },
-    "replyTo": {
-      "type": "string",
-      "description": "ID of the message this is replying to"
+      "enum": ["sent", "delivered", "read"],
+      "default": "sent",
+      "description": "Message delivery status"
     },
     "metadata": {
       "type": "object",
-      "description": "Additional message metadata",
       "properties": {
-        "isEncrypted": {
-          "type": "boolean",
-          "default": false
-        },
-        "encryptionKey": {
-          "type": "string"
-        },
-        "retentionPolicy": {
+        "fileUrl": {
           "type": "string",
-          "enum": ["standard", "extended", "permanent"]
+          "description": "URL for file attachments"
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Original filename for attachments"
+        },
+        "fileSize": {
+          "type": "number",
+          "description": "File size in bytes"
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "MIME type of the attachment"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "createdAt": {
       "type": "string",
       "format": "date-time",
-      "description": "Message creation timestamp",
-      "index": "index"
+      "description": "Message creation timestamp"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Message last update timestamp"
     }
   },
-  "indexes": [
-    {
-      "fields": ["chatId", "createdAt"]
-    },
-    {
-      "fields": ["senderId", "createdAt"]
-    },
-    {
-      "fields": ["isRead", "createdAt"]
-    },
-    {
-      "fields": ["type", "createdAt"]
-    }
-  ]
+  "required": [
+    "subscriptionId",
+    "fromUserId",
+    "toUserId",
+    "content",
+    "messageType",
+    "status"
+  ],
+  "additionalProperties": false
 }

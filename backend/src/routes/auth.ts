@@ -53,8 +53,8 @@ export async function authMiddleware(
     }
 
     request.user = {
-      id: user._id.toString(),
-      username: user.username,
+      id: (user._id as any).toString(),
+      username: (user as any).username,
       email: user.email,
       role: user.role,
     };
@@ -95,13 +95,13 @@ export async function authRoutes(fastify: FastifyInstance) {
         await user.save();
 
         // Set session
-        (request.session as { userId: string }).userId = user._id.toString();
+        (request.session as any).userId = (user._id as any).toString();
 
         reply.code(201).send({
           message: 'User registered successfully',
           user: {
-            id: user._id.toString(),
-            username: user.username,
+            id: (user._id as any).toString(),
+            username: (user as any).username,
             email: user.email,
             role: user.role,
           },
@@ -143,13 +143,13 @@ export async function authRoutes(fastify: FastifyInstance) {
         }
 
         // Set session
-        (request.session as { userId: string }).userId = user._id.toString();
+        (request.session as any).userId = (user._id as any).toString();
 
         reply.send({
           message: 'Login successful',
           user: {
-            id: user._id.toString(),
-            username: user.username,
+            id: (user._id as any).toString(),
+            username: (user as any).username,
             email: user.email,
             role: user.role,
           },
@@ -221,8 +221,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         reply.send({
           message: 'Profile updated successfully',
           user: {
-            id: user._id.toString(),
-            username: user.username,
+            id: (user._id as any).toString(),
+            username: (user as any).username,
             email: user.email,
             role: user.role,
           },

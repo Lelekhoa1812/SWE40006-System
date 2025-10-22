@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { Subscription } from '../database/models/Subscription';
 import { Doctor } from '../database/models/Doctor';
+import { User } from '../database/models/User';
 import { authMiddleware } from './auth';
 
 // Zod schemas for validation
@@ -12,31 +13,6 @@ const createSubscriptionSchema = z.object({
 const updateSubscriptionSchema = z.object({
   status: z.enum(['approved', 'denied']),
 });
-
-const subscriptionResponseSchema = z.object({
-  id: z.string(),
-  patient: z.object({
-    id: z.string(),
-    username: z.string(),
-    email: z.string(),
-  }),
-  doctor: z.object({
-    id: z.string(),
-    profile: z.object({
-      firstName: z.string(),
-      lastName: z.string(),
-    }),
-    specialties: z.array(z.string()),
-  }),
-  status: z.enum(['requested', 'approved', 'denied']),
-  requestedAt: z.date(),
-  approvedAt: z.date().optional(),
-  deniedAt: z.date().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
-type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
 
 export async function subscriptionRoutes(fastify: FastifyInstance) {
   // Create subscription request (patient only)
@@ -64,8 +40,8 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
 
         // Check if subscription already exists
         const existingSubscription = await Subscription.findOne({
-          patient: userId,
-          doctor: body.doctorId,
+          patientId: userId,
+          doctorId: body.doctorId,
         });
 
         if (existingSubscription) {
@@ -76,44 +52,13 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
 
         // Create subscription request
         const subscription = new Subscription({
-          patient: userId,
-          doctor: body.doctorId,
+          patientId: userId,
+          doctorId: body.doctorId,
           status: 'requested',
           requestedAt: new Date(),
         });
 
         await subscription.save();
-
-        // Populate the response
-        const populatedSubscription = await Subscription.findById(
-          subscription._id
-        )
-          .populate('patient', 'username email')
-          .populate('doctor', 'profile.firstName profile.lastName specialties')
-          .lean();
-
-        const response: SubscriptionResponse = {
-          id: populatedSubscription!._id.toString(),
-          patient: {
-            id: populatedSubscription!.patient._id.toString(),
-            username: populatedSubscription!.patient.username,
-            email: populatedSubscription!.patient.email,
-          },
-          doctor: {
-            id: populatedSubscription!.doctor._id.toString(),
-            profile: {
-              firstName: populatedSubscription!.doctor.profile.firstName,
-              lastName: populatedSubscription!.doctor.profile.lastName,
-            },
-            specialties: populatedSubscription!.doctor.specialties,
-          },
-          status: populatedSubscription!.status,
-          requestedAt: populatedSubscription!.requestedAt,
-          approvedAt: populatedSubscription!.approvedAt,
-          deniedAt: populatedSubscription!.deniedAt,
-          createdAt: populatedSubscription!.createdAt,
-          updatedAt: populatedSubscription!.updatedAt,
-        };
 
         request.log.info(
           {
@@ -128,7 +73,12 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
 
         reply.code(201).send({
           message: 'Subscription request created successfully',
-          subscription: response,
+          subscription: {
+            id: subscription._id.toString(),
+            status: subscription.status,
+            requestedAt: subscription.requestedAt,
+            doctorId: body.doctorId,
+          },
         });
       } catch (error) {
         if (error instanceof z.ZodError) {
@@ -162,9 +112,9 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
 
         let query: Record<string, any> = {};
         if (userRole === 'patient') {
-          query.patient = userId;
+          query.patientId = userId;
         } else if (userRole === 'doctor') {
-          query.doctor = userId;
+          query.doctorId = userId;
         } else {
           return reply.code(403).send({
             error: 'Access denied',
@@ -172,33 +122,54 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         }
 
         const subscriptions = await Subscription.find(query)
-          .populate('patient', 'username email')
-          .populate('doctor', 'profile.firstName profile.lastName specialties')
           .sort({ createdAt: -1 })
           .lean();
 
-        const response: SubscriptionResponse[] = subscriptions.map((sub) => ({
-          id: sub._id.toString(),
-          patient: {
-            id: sub.patient._id.toString(),
-            username: sub.patient.username,
-            email: sub.patient.email,
-          },
-          doctor: {
-            id: sub.doctor._id.toString(),
-            profile: {
-              firstName: sub.doctor.profile.firstName,
-              lastName: sub.doctor.profile.lastName,
-            },
-            specialties: sub.doctor.specialties,
-          },
-          status: sub.status,
-          requestedAt: sub.requestedAt,
-          approvedAt: sub.approvedAt,
-          deniedAt: sub.deniedAt,
-          createdAt: sub.createdAt,
-          updatedAt: sub.updatedAt,
-        }));
+        // Get additional details for each subscription
+        const subscriptionsWithDetails = await Promise.all(
+          subscriptions.map(async (sub) => {
+            let patientDetails = null;
+            let doctorDetails = null;
+
+            if (userRole === 'patient') {
+              // For patients, get doctor details
+              doctorDetails = await Doctor.findById(sub.doctorId)
+                .select('profile.firstName profile.lastName specialties')
+                .lean();
+            } else {
+              // For doctors, get patient details
+              patientDetails = await User.findById(sub.patientId)
+                .select('username email')
+                .lean();
+            }
+
+            return {
+              id: sub._id.toString(),
+              patient: patientDetails
+                ? {
+                    id: patientDetails._id.toString(),
+                    username: patientDetails.username,
+                    email: patientDetails.email,
+                  }
+                : null,
+              doctor: doctorDetails
+                ? {
+                    id: doctorDetails._id.toString(),
+                    profile: {
+                      firstName: doctorDetails.profile.firstName,
+                      lastName: doctorDetails.profile.lastName,
+                    },
+                    specialties: doctorDetails.specialties,
+                  }
+                : null,
+              status: sub.status,
+              requestedAt: sub.requestedAt,
+              respondedAt: sub.respondedAt,
+              createdAt: sub.createdAt,
+              updatedAt: sub.updatedAt,
+            };
+          })
+        );
 
         request.log.info(
           {
@@ -211,7 +182,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
           'Fetched user subscriptions'
         );
 
-        reply.send({ subscriptions: response });
+        reply.send({ subscriptions: subscriptionsWithDetails });
       } catch (error) {
         request.log.error(
           {
@@ -253,7 +224,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         }
 
         // Check if the doctor owns this subscription
-        if (subscription.doctor.toString() !== userId) {
+        if (subscription.doctorId !== userId) {
           return reply.code(403).send({
             error: 'You can only manage your own subscriptions',
           });
@@ -262,45 +233,14 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         // Update subscription status
         const updateData: Record<string, any> = {
           status: body.status,
+          respondedAt: new Date(),
         };
-
-        if (body.status === 'approved') {
-          updateData.approvedAt = new Date();
-        } else if (body.status === 'denied') {
-          updateData.deniedAt = new Date();
-        }
 
         const updatedSubscription = await Subscription.findByIdAndUpdate(
           id,
           updateData,
           { new: true }
-        )
-          .populate('patient', 'username email')
-          .populate('doctor', 'profile.firstName profile.lastName specialties')
-          .lean();
-
-        const response: SubscriptionResponse = {
-          id: updatedSubscription!._id.toString(),
-          patient: {
-            id: updatedSubscription!.patient._id.toString(),
-            username: updatedSubscription!.patient.username,
-            email: updatedSubscription!.patient.email,
-          },
-          doctor: {
-            id: updatedSubscription!.doctor._id.toString(),
-            profile: {
-              firstName: updatedSubscription!.doctor.profile.firstName,
-              lastName: updatedSubscription!.doctor.profile.lastName,
-            },
-            specialties: updatedSubscription!.doctor.specialties,
-          },
-          status: updatedSubscription!.status,
-          requestedAt: updatedSubscription!.requestedAt,
-          approvedAt: updatedSubscription!.approvedAt,
-          deniedAt: updatedSubscription!.deniedAt,
-          createdAt: updatedSubscription!.createdAt,
-          updatedAt: updatedSubscription!.updatedAt,
-        };
+        ).lean();
 
         request.log.info(
           {
@@ -315,7 +255,12 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
 
         reply.send({
           message: `Subscription ${body.status} successfully`,
-          subscription: response,
+          subscription: {
+            id: updatedSubscription!._id.toString(),
+            status: updatedSubscription!.status,
+            requestedAt: updatedSubscription!.requestedAt,
+            respondedAt: updatedSubscription!.respondedAt,
+          },
         });
       } catch (error) {
         if (error instanceof z.ZodError) {

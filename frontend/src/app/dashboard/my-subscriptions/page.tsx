@@ -6,7 +6,7 @@ import { useSubscriptions } from '@/contexts/subscription-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, XCircle, Clock, User } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, User, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function MySubscriptionsPage() {
@@ -169,10 +169,19 @@ export default function MySubscriptionsPage() {
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Subscription Approved
                           </div>
-                          <p className="text-green-700 text-xs">
+                          <p className="text-green-700 text-xs mb-3">
                             You can now communicate with this doctor through the
                             platform.
                           </p>
+                          <button
+                            onClick={() =>
+                              router.push(`/chat/${subscription.id}`)
+                            }
+                            className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 px-3 rounded-md flex items-center justify-center"
+                          >
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            Start Chat
+                          </button>
                         </div>
                       )}
 

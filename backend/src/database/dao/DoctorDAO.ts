@@ -87,7 +87,7 @@ export class DoctorDAO {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      doctors,
+      doctors: doctors as any,
       total,
       page,
       limit,
@@ -99,7 +99,7 @@ export class DoctorDAO {
    * Get doctor by ID
    */
   static async getById(id: string): Promise<IDoctor | null> {
-    return Doctor.findById(id).select('-password').lean();
+    return Doctor.findById(id).select('-password').lean() as any;
   }
 
   /**
@@ -138,7 +138,7 @@ export class DoctorDAO {
       .select('-password')
       .sort({ rating: -1, reviewCount: -1 })
       .limit(limit)
-      .lean();
+      .lean() as any;
   }
 
   /**
