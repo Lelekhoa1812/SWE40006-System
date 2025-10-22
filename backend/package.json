@@ -12,7 +12,8 @@
     "test:run": "vitest run",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:doctors": "tsx --require dotenv/config src/scripts/seed-doctors.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",
