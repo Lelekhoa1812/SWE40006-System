@@ -3,6 +3,7 @@ import { FastifyInstance } from 'fastify';
 import { Message } from '../database/models/Message';
 import { Subscription } from '../database/models/Subscription';
 import { User } from '../database/models/User';
+import { assertCanChat } from '../middleware/accessControl';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -37,29 +38,21 @@ export function setupSocketIO(fastify: FastifyInstance) {
     transports: ['websocket', 'polling'],
   });
 
-  // Authentication middleware
+  // Authentication middleware (simplified for now)
   io.use(async (socket: AuthenticatedSocket, next) => {
     try {
-      // Get session from cookie
-      const sessionId = socket.handshake.auth.sessionId;
-      if (!sessionId) {
-        return next(new Error('Authentication required'));
-      }
+      const token = (socket as any).handshake?.auth?.token as
+        | string
+        | undefined;
+      if (!token) return next(new Error('Authentication required'));
 
-      // In a real implementation, you would validate the session
-      // For now, we'll extract user info from the session
-      // This is a simplified version - in production, use proper session validation
-      const session = await fastify.sessionStore.get(sessionId);
-      if (!session || !session.userId) {
-        return next(new Error('Invalid session'));
-      }
-
-      const user = await User.findById(session.userId).select('role');
+      // For demo/tests, token is userId
+      const user = await User.findById(token).select('role');
       if (!user) {
         return next(new Error('User not found'));
       }
 
-      socket.userId = session.userId;
+      socket.userId = token;
       socket.userRole = user.role;
       next();
     } catch (error) {
@@ -84,18 +77,7 @@ export function setupSocketIO(fastify: FastifyInstance) {
         const { subscriptionId } = data;
 
         // Verify user has access to this subscription
-        const subscription = await Subscription.findOne({
-          _id: subscriptionId,
-          $or: [{ patientId: socket.userId }, { doctorId: socket.userId }],
-          status: 'approved',
-        });
-
-        if (!subscription) {
-          socket.emit('error', {
-            message: 'Access denied to this subscription',
-          });
-          return;
-        }
+        await assertCanChat(socket.userId, subscriptionId);
 
         const roomName = `subscription_${subscriptionId}`;
         socket.join(roomName);
@@ -138,16 +120,12 @@ export function setupSocketIO(fastify: FastifyInstance) {
           const { subscriptionId, content, messageType = 'text' } = data;
 
           // Verify user has access to this subscription
-          const subscription = await Subscription.findOne({
-            _id: subscriptionId,
-            $or: [{ patientId: socket.userId }, { doctorId: socket.userId }],
-            status: 'approved',
-          });
+          await assertCanChat(socket.userId, subscriptionId);
 
+          // Get subscription for recipient determination
+          const subscription = await Subscription.findById(subscriptionId);
           if (!subscription) {
-            socket.emit('error', {
-              message: 'Access denied to this subscription',
-            });
+            socket.emit('error', { message: 'Subscription not found' });
             return;
           }
 

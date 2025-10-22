@@ -95,7 +95,7 @@ export default function ChatPage() {
 
           // Check if user has access
           if (foundSubscription.status !== 'approved') {
-            setError('This subscription is not approved for chat');
+            router.push('/chat/no-access');
             return;
           }
 
@@ -103,7 +103,7 @@ export default function ChatPage() {
             foundSubscription.patientId !== user.id &&
             foundSubscription.doctorId !== user.id
           ) {
-            setError('Access denied to this chat');
+            router.push('/chat/no-access');
             return;
           }
 
@@ -112,7 +112,7 @@ export default function ChatPage() {
             joinRoom(subscriptionId);
           }
         } else {
-          setError('Subscription not found');
+          router.push('/chat/no-access');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load chat');
@@ -139,6 +139,7 @@ export default function ChatPage() {
     joinRoom,
     leaveRoom,
     clearMessages,
+    router,
   ]);
 
   // Join room when socket connects

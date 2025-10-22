@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Message } from '../database/models/Message';
 import { Subscription } from '../database/models/Subscription';
 import { authMiddleware } from './auth';
+import { writeAudit } from '../middleware/audit';
 
 // Zod schemas for validation
 const getMessagesSchema = z.object({
@@ -155,6 +156,14 @@ export async function messageRoutes(fastify: FastifyInstance) {
 
         await message.save();
 
+        await writeAudit({
+          request,
+          action: 'message.send',
+          resourceType: 'message',
+          resourceId: message._id.toString(),
+          metadata: { subscriptionId },
+        });
+
         request.log.info(
           {
             endpoint: '/api/v1/messages',
@@ -167,7 +176,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
         );
 
         reply.code(201).send({
-          message: 'Message sent successfully',
+          message: 'Message saved successfully.',
           data: {
             id: message._id.toString(),
             subscriptionId: message.subscriptionId,

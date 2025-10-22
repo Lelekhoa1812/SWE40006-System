@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { User } from '../database/models/User';
+import { writeAudit } from '../middleware/audit';
 
 // Zod schemas for validation
 const registerSchema = z.object({
@@ -97,6 +98,13 @@ export async function authRoutes(fastify: FastifyInstance) {
         // Set session
         (request.session as any).userId = (user._id as any).toString();
 
+        await writeAudit({
+          request,
+          action: 'user.register',
+          resourceType: 'user',
+          resourceId: (user._id as any).toString(),
+        });
+
         reply.code(201).send({
           message: 'User registered successfully',
           user: {
@@ -145,6 +153,13 @@ export async function authRoutes(fastify: FastifyInstance) {
         // Set session
         (request.session as any).userId = (user._id as any).toString();
 
+        await writeAudit({
+          request,
+          action: 'user.login',
+          resourceType: 'user',
+          resourceId: (user._id as any).toString(),
+        });
+
         reply.send({
           message: 'Login successful',
           user: {
@@ -176,6 +191,7 @@ export async function authRoutes(fastify: FastifyInstance) {
             reply.code(500).send({ error: 'Could not log out' });
             return;
           }
+          void writeAudit({ request, action: 'user.logout' });
           reply.send({ message: 'Logout successful' });
         });
       } catch (error) {

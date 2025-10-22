@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",
-    "@fastify/session": "^11.1.0",
+    "@fastify/session": "10.0.0",
     "@fastify/websocket": "^11.2.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/express-session": "^1.18.2",
@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
+    "mongodb-memory-server": "^10.2.3",
     "tsx": "^4.6.0",
     "typescript": "^5.3.2",
     "vitest": "^1.0.0"

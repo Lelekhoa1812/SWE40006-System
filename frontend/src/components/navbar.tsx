@@ -62,6 +62,13 @@ export function Navbar() {
                     Dashboard
                   </Button>
                 </Link>
+                {user.role === 'admin' && (
+                  <Link href="/admin/audit">
+                    <Button variant="outline" size="sm">
+                      Admin
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>

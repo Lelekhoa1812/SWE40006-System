@@ -4,6 +4,7 @@ import { Subscription } from '../database/models/Subscription';
 import { Doctor } from '../database/models/Doctor';
 import { User } from '../database/models/User';
 import { authMiddleware } from './auth';
+import { writeAudit } from '../middleware/audit';
 
 // Zod schemas for validation
 const createSubscriptionSchema = z.object({
@@ -71,6 +72,14 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
           'Subscription request created'
         );
 
+        await writeAudit({
+          request,
+          action: 'subscription.request',
+          resourceType: 'subscription',
+          resourceId: subscription._id.toString(),
+          metadata: { doctorId: body.doctorId },
+        });
+
         reply.code(201).send({
           message: 'Subscription request created successfully',
           subscription: {
@@ -97,6 +106,60 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         );
 
         reply.code(500).send({ error: 'Internal server error' });
+      }
+    }
+  );
+
+  // Compatibility alias for tests: POST /subscriptions/request
+  fastify.post(
+    '/subscriptions/request',
+    { preHandler: authMiddleware },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = z
+          .object({
+            doctorId: z.string().min(1),
+          })
+          .parse(request.body);
+
+        const userId = request.user!.id;
+
+        const existing = await Subscription.findOne({
+          patientId: userId,
+          doctorId: body.doctorId,
+        });
+        if (existing) {
+          return reply.code(400).send({ error: 'Subscription exists' });
+        }
+
+        const sub = await Subscription.create({
+          patientId: userId,
+          doctorId: body.doctorId,
+          status: 'requested',
+          requestedAt: new Date(),
+        });
+
+        await writeAudit({
+          request,
+          action: 'subscription.request',
+          resourceType: 'subscription',
+          resourceId: sub._id.toString(),
+          metadata: { doctorId: body.doctorId },
+        });
+
+        return reply
+          .code(201)
+          .send({
+            message: 'Subscription requested successfully.',
+            id: sub._id.toString(),
+          });
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          return reply
+            .code(400)
+            .send({ error: 'Bad request', details: err.errors });
+        }
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   );
@@ -280,6 +343,59 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
 
         reply.code(500).send({ error: 'Internal server error' });
       }
+    }
+  );
+
+  // Compatibility aliases for tests: PUT approve/deny
+  fastify.put(
+    '/subscriptions/approve',
+    { preHandler: authMiddleware },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = z
+        .object({ subscriptionId: z.string().min(1) })
+        .parse(request.body);
+      const result = await Subscription.updateOne(
+        { _id: body.subscriptionId },
+        { $set: { status: 'approved', respondedAt: new Date() } }
+      );
+      if (result.matchedCount === 0) {
+        return reply.code(404).send({ message: 'Subscription not found.' });
+      }
+      await writeAudit({
+        request,
+        action: 'subscription.approve',
+        resourceType: 'subscription',
+        resourceId: body.subscriptionId,
+      });
+      return reply
+        .code(200)
+        .send({ message: 'Subscription status updated to approved.' });
+    }
+  );
+
+  fastify.put(
+    '/subscriptions/deny',
+    { preHandler: authMiddleware },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = z
+        .object({ subscriptionId: z.string().min(1) })
+        .parse(request.body);
+      const result = await Subscription.updateOne(
+        { _id: body.subscriptionId },
+        { $set: { status: 'denied', respondedAt: new Date() } }
+      );
+      if (result.matchedCount === 0) {
+        return reply.code(404).send({ message: 'Subscription not found.' });
+      }
+      await writeAudit({
+        request,
+        action: 'subscription.deny',
+        resourceType: 'subscription',
+        resourceId: body.subscriptionId,
+      });
+      return reply
+        .code(200)
+        .send({ message: 'Subscription status updated to denied.' });
     }
   );
 }

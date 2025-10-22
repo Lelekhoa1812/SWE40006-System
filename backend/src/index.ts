@@ -7,9 +7,11 @@ import { doctorRoutes } from './routes/doctors';
 import { subscriptionRoutes } from './routes/subscriptions';
 import { messageRoutes } from './routes/messages';
 import { authRoutes } from './routes/auth';
+import { adminRoutes } from './routes/admin';
 import { env } from './env';
 import { connectDatabase } from './database/connection';
 import { setupSocketIO } from './socket/socketHandler';
+import { startRetentionJob } from './jobs/retention';
 
 const fastify = Fastify({
   logger: {
@@ -70,7 +72,7 @@ fastify.register(session, {
   },
   store: MongoStore.create({
     mongoUrl: env.MONGODB_URI,
-  }),
+  }) as any,
 });
 
 // Register routes
@@ -79,6 +81,7 @@ fastify.register(authRoutes, { prefix: '/api/v1/auth' });
 fastify.register(doctorRoutes, { prefix: '/api/v1' });
 fastify.register(subscriptionRoutes, { prefix: '/api/v1' });
 fastify.register(messageRoutes, { prefix: '/api/v1' });
+fastify.register(adminRoutes, { prefix: '/api/v1' });
 
 const start = async (): Promise<void> => {
   try {
@@ -92,6 +95,9 @@ const start = async (): Promise<void> => {
     // Setup Socket.IO after server is ready
     setupSocketIO(fastify);
     fastify.log.info('Socket.IO server initialized');
+
+    // Start retention job
+    startRetentionJob(fastify.log);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

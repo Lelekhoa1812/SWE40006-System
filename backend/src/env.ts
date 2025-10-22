@@ -17,6 +17,12 @@ const EnvSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
+  RETENTION_DAYS: z
+    .string()
+    .regex(/^\d+$/)
+    .transform((v) => Number(v))
+    .default('30')
+    .describe('Days to retain messages before purge'),
 });
 
 export type BackendEnv = z.infer<typeof EnvSchema> & { PORT: number };
@@ -30,4 +36,5 @@ export const env: BackendEnv = EnvSchema.transform((v) => ({
   MONGODB_URI: process.env.MONGODB_URI ?? '',
   SESSION_SECRET: process.env.SESSION_SECRET ?? '',
   NODE_ENV: process.env.NODE_ENV ?? 'development',
+  RETENTION_DAYS: process.env.RETENTION_DAYS ?? '30',
 });

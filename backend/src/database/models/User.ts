@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IUser extends Document {
   id: string;
+  username: string;
   email: string;
   password: string;
   role: 'patient' | 'doctor' | 'admin';
@@ -22,6 +23,14 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      minlength: 3,
+      maxlength: 30,
+    },
     email: {
       type: String,
       required: true,
@@ -100,6 +109,7 @@ const UserSchema = new Schema<IUser>(
 );
 
 // Indexes
+UserSchema.index({ username: 1 }, { unique: true });
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ role: 1, isActive: 1 });
 UserSchema.index({ createdAt: 1 });
