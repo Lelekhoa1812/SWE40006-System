@@ -1,5 +1,10 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Star, MapPin, Phone, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Star, MapPin, Phone, Mail, UserPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { useSubscriptions } from '@/contexts/subscription-context';
+import { PrivacyConsentModal } from '@/components/privacy-consent-modal';
+import { useState } from 'react';
 
 interface Doctor {
   id: string;
@@ -48,13 +53,74 @@ interface Doctor {
 }
 
 export function DoctorCard({ doctor }: { doctor: Doctor }) {
+  const { user } = useAuth();
+  const { createSubscription, subscriptions } = useSubscriptions();
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+
   const fullName = `${doctor.profile.firstName} ${doctor.profile.lastName}`;
   const location = doctor.location
     ? `${doctor.location.city}, ${doctor.location.state}`
     : 'Location not specified';
 
+  // Check if user has already subscribed to this doctor
+  const existingSubscription = subscriptions.find(
+    (sub) => sub.doctor.id === doctor.id
+  );
+
+  const checkConsent = () => {
+    const consent = localStorage.getItem('medmsg-privacy-consent');
+    if (!consent) {
+      setShowConsentModal(true);
+      return false;
+    }
+
+    try {
+      const consentData = JSON.parse(consent);
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+      if (new Date(consentData.timestamp) < oneYearAgo) {
+        setShowConsentModal(true);
+        return false;
+      }
+
+      return true;
+    } catch {
+      setShowConsentModal(true);
+      return false;
+    }
+  };
+
+  const handleSubscribe = async () => {
+    if (!user || user.role !== 'patient') return;
+
+    if (!checkConsent()) {
+      return;
+    }
+
+    setIsSubscribing(true);
+    try {
+      await createSubscription(doctor.id);
+    } catch (error) {
+      console.error('Failed to subscribe:', error);
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
+  const handleConsentAccept = () => {
+    setShowConsentModal(false);
+    // Retry subscription after consent
+    handleSubscribe();
+  };
+
+  const handleConsentDecline = () => {
+    setShowConsentModal(false);
+  };
+
   return (
-    <Card className="h-full">
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <div className="font-semibold text-lg">{fullName}</div>
         <div className="text-sm text-gray-500">
@@ -70,8 +136,8 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
           </div>
         )}
       </CardHeader>
-      <CardContent>
-        <div className="text-sm text-gray-700 space-y-2">
+      <CardContent className="flex-1 flex flex-col">
+        <div className="text-sm text-gray-700 space-y-2 flex-1">
           {doctor.rating > 0 && (
             <div className="flex items-center space-x-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -119,7 +185,48 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
             </div>
           )}
         </div>
+
+        {/* Subscribe Button for Patients */}
+        {user && user.role === 'patient' && (
+          <div className="mt-4 pt-4 border-t">
+            {existingSubscription ? (
+              <div className="text-center">
+                <span
+                  className={`text-sm font-medium ${
+                    existingSubscription.status === 'approved'
+                      ? 'text-green-600'
+                      : existingSubscription.status === 'denied'
+                        ? 'text-red-600'
+                        : 'text-yellow-600'
+                  }`}
+                >
+                  {existingSubscription.status === 'approved'
+                    ? 'Subscribed'
+                    : existingSubscription.status === 'denied'
+                      ? 'Request Denied'
+                      : 'Request Pending'}
+                </span>
+              </div>
+            ) : (
+              <Button
+                onClick={handleSubscribe}
+                disabled={isSubscribing}
+                className="w-full"
+                size="sm"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                {isSubscribing ? 'Requesting...' : 'Subscribe'}
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
+
+      <PrivacyConsentModal
+        isOpen={showConsentModal}
+        onAccept={handleConsentAccept}
+        onDecline={handleConsentDecline}
+      />
     </Card>
   );
 }

@@ -71,22 +71,42 @@ export default function DashboardPage() {
             </Card>
 
             {user.role === 'patient' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Find Doctors</CardTitle>
-                  <CardDescription>
-                    Browse and connect with medical specialists
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => router.push('/doctors')}
-                    className="w-full"
-                  >
-                    Browse Doctors
-                  </Button>
-                </CardContent>
-              </Card>
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Find Doctors</CardTitle>
+                    <CardDescription>
+                      Browse and connect with medical specialists
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={() => router.push('/doctors')}
+                      className="w-full"
+                    >
+                      Browse Doctors
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>My Subscriptions</CardTitle>
+                    <CardDescription>
+                      View your subscription requests and status
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={() => router.push('/dashboard/my-subscriptions')}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      View Subscriptions
+                    </Button>
+                  </CardContent>
+                </Card>
+              </>
             )}
 
             {user.role === 'doctor' && (
