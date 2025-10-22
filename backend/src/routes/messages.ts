@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import { ObjectId } from 'mongodb';
-import { getDb } from '../database/client';
+import { getDb } from '../database/client.js';
 import { z, ZodError } from 'zod';
 
 const messageBodySchema = z.object({
@@ -35,12 +35,10 @@ export async function messageRoutes(fastify: FastifyInstance) {
 
         const result = await messages.insertOne(newMessage);
 
-        reply
-          .code(201)
-          .send({
-            message: 'Message saved successfully.',
-            messageId: result.insertedId,
-          });
+        reply.code(201).send({
+          message: 'Message saved successfully.',
+          messageId: result.insertedId,
+        });
       } catch (error) {
         if (error instanceof ZodError) {
           return reply
