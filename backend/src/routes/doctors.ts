@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import doctorsData from '../../../database/mocks/doctors.json';
+import doctorsData from '../../../database/mocks/doctors.json' with { type: 'json' };
 
 const DoctorSchema = z.object({
   id: z.string(),

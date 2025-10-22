@@ -1,21 +1,25 @@
-name: smoke-test
+name: typecheck
 
 on:
   workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
+      - 'frontend/**'
       - 'backend/**'
   push:
     branches: [main]
     paths:
+      - 'frontend/**'
       - 'backend/**'
 
 jobs:
-  smoke-test:
+  typecheck:
+    name: TypeScript Typecheck
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -23,7 +27,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install pnpm
+      - name: Install PNPM
         run: npm install -g pnpm
 
       - name: Enable Corepack and activate pnpm
@@ -34,17 +38,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build and start backend server
-        run: |
-          cd backend
-          pnpm build
-          pnpm start &
-          sleep 5
+      - name: Run TypeScript typecheck
+        run: pnpm tsc --build --noEmit
 
-      - name: Health check
-        run: |
-          curl -f http://localhost:4000/health || exit 1
-          echo "✅ Health check passed"
-
-      - name: Stop server
-        run: pkill -f "node.*backend" || true

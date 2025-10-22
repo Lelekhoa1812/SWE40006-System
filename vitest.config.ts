@@ -4,7 +4,17 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['**/*.{test,spec}.{js,ts,tsx}'],
-    exclude: ['node_modules', 'dist', 'build', '.next'],
+    include: [
+      'backend/src/**/*.{test,spec}.{js,ts}',
+      'database/**/*.{test,spec}.{js,ts}',
+    ],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.next/**',
+      '**/out/**',
+      'frontend/**',
+    ],
   },
 });

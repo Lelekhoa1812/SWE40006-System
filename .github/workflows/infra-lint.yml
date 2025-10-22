@@ -1,7 +1,9 @@
 name: infra-lint
 
 on:
+  workflow_dispatch:
   pull_request:
+    branches: [main]
     paths:
       - 'infra/**'
   push:
@@ -14,7 +16,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Azure CLI
-        uses: azure/setup-azcli@v3
-      - name: Bicep build
-        run: az bicep build --file infra/main.bicep
+      - name: Run Bicep build
+        uses: azure/cli@v2
+        with:
+          inlineScript: az bicep build --file infra/main.bicep

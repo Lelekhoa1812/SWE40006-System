@@ -1,10 +1,10 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { healthRoutes } from './routes/health';
-import { doctorRoutes } from './routes/doctors';
-import { subscriptionRoutes } from './routes/subscriptions';
-import { messageRoutes } from './routes/messages';
-import { env } from './env';
+import { healthRoutes } from './routes/health.js';
+import { doctorRoutes } from './routes/doctors.js';
+import { subscriptionRoutes } from './routes/subscriptions.js';
+import { messageRoutes } from './routes/messages.js';
+import { env } from './env.js';
 
 const fastify = Fastify({
   logger: {
