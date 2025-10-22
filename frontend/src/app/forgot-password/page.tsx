@@ -18,8 +18,8 @@ export default function ForgotPassword() {
     setMessage('');
 
     try {
-      // TODO: Hook up to Firebase or API reset endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate async
+      // Replace this with API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       setMessage('Password reset email has been sent!');
     } catch (error) {
       setMessage('Something went wrong. Please try again.');

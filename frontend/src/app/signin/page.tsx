@@ -34,7 +34,7 @@ export default function SignInPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Replace with your Firebase or API login
+    // Replace this with API call
     setTimeout(() => {
       console.log('User signed in:', form);
       setLoading(false);

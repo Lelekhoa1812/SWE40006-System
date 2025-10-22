@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // new import
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface SignUpForm {
   name: string;
@@ -40,7 +40,7 @@ export default function SignUpForm() {
 
     setLoading(true);
 
-    // Replace this with your API or Firebase call
+    // Replace this with API call
     setTimeout(() => {
       console.log('User signed up:', form);
       setLoading(false);
