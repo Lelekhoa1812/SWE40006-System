@@ -34,9 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('/api/v1/auth/me', {
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://medmsg-blue.azurewebsites.net'}/api/v1/auth/me`,
+        {
+          credentials: 'include',
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -57,14 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('/api/v1/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://medmsg-blue.azurewebsites.net'}/api/v1/auth/login`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -81,14 +87,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     role = 'patient'
   ) => {
-    const response = await fetch('/api/v1/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ username, email, password, role }),
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://medmsg-blue.azurewebsites.net'}/api/v1/auth/register`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ username, email, password, role }),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -100,22 +109,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await fetch('/api/v1/auth/logout', {
-      method: 'POST',
-      credentials: 'include',
-    });
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://medmsg-blue.azurewebsites.net'}/api/v1/auth/logout`,
+      {
+        method: 'POST',
+        credentials: 'include',
+      }
+    );
     setUser(null);
   };
 
   const updateProfile = async (data: { username?: string; email?: string }) => {
-    const response = await fetch('/api/v1/auth/profile', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://medmsg-blue.azurewebsites.net'}/api/v1/auth/profile`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
