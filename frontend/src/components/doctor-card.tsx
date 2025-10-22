@@ -10,12 +10,24 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { postData } from '@/lib/api';
 
 export function DoctorCard({ doctor }: { doctor: Doctor }) {
   // Doctor window
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  function handleSend() {
+    const data = {
+      patientId: '1AA1',
+      doctorId: '2BB2',
+    };
+
+    postData('/api/v1/subscriptions/request', data).then((res) => {
+      console.log(res);
+    });
+  }
 
   return (
     <>
@@ -77,7 +89,7 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
 
           <div>
             <label className="space-y-2 text-sm" htmlFor="message">
-              Express your interest here:{' '}
+              Send Subscribe Request:{' '}
             </label>
             <br />
             <textarea
@@ -86,10 +98,15 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
               className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               placeholder="Enter your message here..."
             ></textarea>
+            <p className="space-y-2 text-sm">
+              By sending this subscription request you are agreeing to sharing
+              your personal and medical details with the doctor and affiliated
+              services{' '}
+            </p>
           </div>
           <DialogFooter>
-            <Button variant="default" onClick={handleClose}>
-              Submit
+            <Button variant="default" onClick={handleSend}>
+              Send
             </Button>
             <Button variant="secondary" onClick={handleClose}>
               Close
