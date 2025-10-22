@@ -15,6 +15,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchJson } from '@/lib/api';
 import { DoctorCard } from '@/components/doctor-card';
+import { DoctorCardSkeleton } from '@/components/doctor-card-skeleton';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Doctor {
   id: string;
@@ -105,6 +107,7 @@ const DoctorCardSkeleton = () => (
 );
 
 export default function DoctorsPage() {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All Specialties');
   const [city, setCity] = useState('');
@@ -157,6 +160,12 @@ export default function DoctorsPage() {
         const message =
           e instanceof Error ? e.message : 'Failed to load doctors';
         setError(message);
+
+        toast({
+          title: 'Failed to Load Doctors',
+          description: message,
+          variant: 'destructive',
+        });
       } finally {
         setIsLoading(false);
       }
@@ -275,7 +284,29 @@ export default function DoctorsPage() {
               !error &&
               (doctors.length === 0 ? (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500">No doctors found.</p>
+                  <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
+                    <Search className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No doctors found
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Try adjusting your search criteria or filters to find more
+                    doctors.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedSpecialty('All Specialties');
+                      setCity('');
+                      setState('');
+                      setMinRating('');
+                      void loadDoctors(1);
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
                 </div>
               ) : (
                 doctors.map((doctor) => (

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { fetchJson } from '@/lib/api';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Subscription {
   id: string;
@@ -48,6 +49,7 @@ export function SubscriptionProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const { toast } = useToast();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,11 +93,23 @@ export function SubscriptionProvider({
         // Add the new subscription to the list
         setSubscriptions((prev) => [data.subscription, ...prev]);
 
+        toast({
+          title: 'Subscription Request Sent',
+          description: 'Your subscription request has been sent to the doctor.',
+        });
+
         return data.subscription;
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Failed to create subscription';
         setError(message);
+
+        toast({
+          title: 'Subscription Request Failed',
+          description: message,
+          variant: 'destructive',
+        });
+
         throw err;
       }
     },
@@ -127,11 +141,23 @@ export function SubscriptionProvider({
           )
         );
 
+        toast({
+          title: `Subscription ${status === 'approved' ? 'Approved' : 'Denied'}`,
+          description: `The subscription request has been ${status}.`,
+        });
+
         return data.subscription;
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Failed to update subscription';
         setError(message);
+
+        toast({
+          title: 'Update Failed',
+          description: message,
+          variant: 'destructive',
+        });
+
         throw err;
       }
     },

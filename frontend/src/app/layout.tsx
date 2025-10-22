@@ -7,6 +7,7 @@ import { Footer } from '@/components/footer';
 import { AuthProvider } from '@/contexts/auth-context';
 import { SubscriptionProvider } from '@/contexts/subscription-context';
 import { SocketProvider } from '@/contexts/socket-context';
+import { Toaster } from '@/components/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
                 <main className="flex-1">{children}</main>
                 <Footer />
               </div>
+              <Toaster />
             </SocketProvider>
           </SubscriptionProvider>
         </AuthProvider>
