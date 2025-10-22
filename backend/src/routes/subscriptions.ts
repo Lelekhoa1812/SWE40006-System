@@ -1,102 +1,340 @@
-import { FastifyInstance } from 'fastify';
-import { ObjectId } from 'mongodb';
-import { getDb } from '../database/client.js';
-import { z, ZodError } from 'zod';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
+import { Subscription } from '../database/models/Subscription';
+import { Doctor } from '../database/models/Doctor';
+import { authMiddleware } from './auth';
 
-const requestBodySchema = z.object({
-  patientId: z.string().min(1),
-  doctorId: z.string().min(1),
+// Zod schemas for validation
+const createSubscriptionSchema = z.object({
+  doctorId: z.string().min(1, 'Doctor ID is required'),
 });
 
-const updateBodySchema = z.object({
-  subscriptionId: z.string().min(1),
+const updateSubscriptionSchema = z.object({
+  status: z.enum(['approved', 'denied']),
 });
+
+const subscriptionResponseSchema = z.object({
+  id: z.string(),
+  patient: z.object({
+    id: z.string(),
+    username: z.string(),
+    email: z.string(),
+  }),
+  doctor: z.object({
+    id: z.string(),
+    profile: z.object({
+      firstName: z.string(),
+      lastName: z.string(),
+    }),
+    specialties: z.array(z.string()),
+  }),
+  status: z.enum(['requested', 'approved', 'denied']),
+  requestedAt: z.date(),
+  approvedAt: z.date().optional(),
+  deniedAt: z.date().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
 
 export async function subscriptionRoutes(fastify: FastifyInstance) {
-  fastify.post('/subscriptions/request', async (request, reply) => {
-    try {
-      const { patientId, doctorId } = requestBodySchema.parse(request.body);
+  // Create subscription request (patient only)
+  fastify.post(
+    '/subscriptions',
+    { preHandler: authMiddleware },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = createSubscriptionSchema.parse(request.body);
+        const userId = request.user!.id;
+        const userRole = request.user!.role;
 
-      const db = await getDb();
-      const subscriptions = db.collection('subscriptions');
+        // Only patients can request subscriptions
+        if (userRole !== 'patient') {
+          return reply.code(403).send({
+            error: 'Only patients can request subscriptions',
+          });
+        }
 
-      const result = await subscriptions.insertOne({
-        patient_id: new ObjectId(patientId),
-        doctor_id: new ObjectId(doctorId),
-        status: 'requested',
-        created_at: new Date(),
-      });
+        // Check if doctor exists
+        const doctor = await Doctor.findById(body.doctorId);
+        if (!doctor) {
+          return reply.code(404).send({ error: 'Doctor not found' });
+        }
 
-      reply.code(201).send({
-        message: 'Subscription requested successfully.',
-        subscriptionId: result.insertedId.toHexString(),
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return reply
-          .code(400)
-          .send({ message: 'Invalid request body.', issues: error.issues });
+        // Check if subscription already exists
+        const existingSubscription = await Subscription.findOne({
+          patient: userId,
+          doctor: body.doctorId,
+        });
+
+        if (existingSubscription) {
+          return reply.code(400).send({
+            error: 'Subscription request already exists',
+          });
+        }
+
+        // Create subscription request
+        const subscription = new Subscription({
+          patient: userId,
+          doctor: body.doctorId,
+          status: 'requested',
+          requestedAt: new Date(),
+        });
+
+        await subscription.save();
+
+        // Populate the response
+        const populatedSubscription = await Subscription.findById(
+          subscription._id
+        )
+          .populate('patient', 'username email')
+          .populate('doctor', 'profile.firstName profile.lastName specialties')
+          .lean();
+
+        const response: SubscriptionResponse = {
+          id: populatedSubscription!._id.toString(),
+          patient: {
+            id: populatedSubscription!.patient._id.toString(),
+            username: populatedSubscription!.patient.username,
+            email: populatedSubscription!.patient.email,
+          },
+          doctor: {
+            id: populatedSubscription!.doctor._id.toString(),
+            profile: {
+              firstName: populatedSubscription!.doctor.profile.firstName,
+              lastName: populatedSubscription!.doctor.profile.lastName,
+            },
+            specialties: populatedSubscription!.doctor.specialties,
+          },
+          status: populatedSubscription!.status,
+          requestedAt: populatedSubscription!.requestedAt,
+          approvedAt: populatedSubscription!.approvedAt,
+          deniedAt: populatedSubscription!.deniedAt,
+          createdAt: populatedSubscription!.createdAt,
+          updatedAt: populatedSubscription!.updatedAt,
+        };
+
+        request.log.info(
+          {
+            endpoint: '/api/v1/subscriptions',
+            action: 'create_subscription',
+            patientId: userId,
+            doctorId: body.doctorId,
+            subscriptionId: subscription._id.toString(),
+          },
+          'Subscription request created'
+        );
+
+        reply.code(201).send({
+          message: 'Subscription request created successfully',
+          subscription: response,
+        });
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({
+            error: 'Validation error',
+            details: error.errors,
+          });
+        }
+
+        request.log.error(
+          {
+            endpoint: '/api/v1/subscriptions',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          'Error creating subscription'
+        );
+
+        reply.code(500).send({ error: 'Internal server error' });
       }
-      fastify.log.error(error, 'Failed to request subscription');
-      reply.code(500).send({ message: 'An error occurred.' });
     }
-  });
+  );
 
-  fastify.put('/subscriptions/approve', async (request, reply) => {
-    try {
-      const { subscriptionId } = updateBodySchema.parse(request.body);
-      const db = await getDb();
-      const subscriptions = db.collection('subscriptions');
+  // Get user's subscriptions (both patients and doctors)
+  fastify.get(
+    '/subscriptions/mine',
+    { preHandler: authMiddleware },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const userId = request.user!.id;
+        const userRole = request.user!.role;
 
-      const result = await subscriptions.updateOne(
-        { _id: new ObjectId(subscriptionId) },
-        { $set: { status: 'approved' } }
-      );
+        let query: Record<string, any> = {};
+        if (userRole === 'patient') {
+          query.patient = userId;
+        } else if (userRole === 'doctor') {
+          query.doctor = userId;
+        } else {
+          return reply.code(403).send({
+            error: 'Access denied',
+          });
+        }
 
-      if (result.matchedCount === 0) {
-        return reply.code(404).send({ message: 'Subscription not found.' });
+        const subscriptions = await Subscription.find(query)
+          .populate('patient', 'username email')
+          .populate('doctor', 'profile.firstName profile.lastName specialties')
+          .sort({ createdAt: -1 })
+          .lean();
+
+        const response: SubscriptionResponse[] = subscriptions.map((sub) => ({
+          id: sub._id.toString(),
+          patient: {
+            id: sub.patient._id.toString(),
+            username: sub.patient.username,
+            email: sub.patient.email,
+          },
+          doctor: {
+            id: sub.doctor._id.toString(),
+            profile: {
+              firstName: sub.doctor.profile.firstName,
+              lastName: sub.doctor.profile.lastName,
+            },
+            specialties: sub.doctor.specialties,
+          },
+          status: sub.status,
+          requestedAt: sub.requestedAt,
+          approvedAt: sub.approvedAt,
+          deniedAt: sub.deniedAt,
+          createdAt: sub.createdAt,
+          updatedAt: sub.updatedAt,
+        }));
+
+        request.log.info(
+          {
+            endpoint: '/api/v1/subscriptions/mine',
+            action: 'fetch_subscriptions',
+            userId,
+            userRole,
+            count: subscriptions.length,
+          },
+          'Fetched user subscriptions'
+        );
+
+        reply.send({ subscriptions: response });
+      } catch (error) {
+        request.log.error(
+          {
+            endpoint: '/api/v1/subscriptions/mine',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          'Error fetching subscriptions'
+        );
+
+        reply.code(500).send({ error: 'Internal server error' });
       }
-
-      reply
-        .code(200)
-        .send({ message: 'Subscription status updated to approved.' });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return reply
-          .code(400)
-          .send({ message: 'Invalid request body.', issues: error.issues });
-      }
-      fastify.log.error(error, 'Failed to update subscription');
-      reply.code(500).send({ message: 'An error occurred.' });
     }
-  });
+  );
 
-  fastify.put('/subscriptions/deny', async (request, reply) => {
-    try {
-      const { subscriptionId } = updateBodySchema.parse(request.body);
-      const db = await getDb();
-      const subscriptions = db.collection('subscriptions');
+  // Update subscription status (doctor only)
+  fastify.patch(
+    '/subscriptions/:id',
+    { preHandler: authMiddleware },
+    async (
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const { id } = request.params;
+        const body = updateSubscriptionSchema.parse(request.body);
+        const userId = request.user!.id;
+        const userRole = request.user!.role;
 
-      const result = await subscriptions.updateOne(
-        { _id: new ObjectId(subscriptionId) },
-        { $set: { status: 'denied' } }
-      );
+        // Only doctors can approve/deny subscriptions
+        if (userRole !== 'doctor') {
+          return reply.code(403).send({
+            error: 'Only doctors can approve or deny subscriptions',
+          });
+        }
 
-      if (result.matchedCount === 0) {
-        return reply.code(404).send({ message: 'Subscription not found.' });
+        const subscription = await Subscription.findById(id);
+        if (!subscription) {
+          return reply.code(404).send({ error: 'Subscription not found' });
+        }
+
+        // Check if the doctor owns this subscription
+        if (subscription.doctor.toString() !== userId) {
+          return reply.code(403).send({
+            error: 'You can only manage your own subscriptions',
+          });
+        }
+
+        // Update subscription status
+        const updateData: Record<string, any> = {
+          status: body.status,
+        };
+
+        if (body.status === 'approved') {
+          updateData.approvedAt = new Date();
+        } else if (body.status === 'denied') {
+          updateData.deniedAt = new Date();
+        }
+
+        const updatedSubscription = await Subscription.findByIdAndUpdate(
+          id,
+          updateData,
+          { new: true }
+        )
+          .populate('patient', 'username email')
+          .populate('doctor', 'profile.firstName profile.lastName specialties')
+          .lean();
+
+        const response: SubscriptionResponse = {
+          id: updatedSubscription!._id.toString(),
+          patient: {
+            id: updatedSubscription!.patient._id.toString(),
+            username: updatedSubscription!.patient.username,
+            email: updatedSubscription!.patient.email,
+          },
+          doctor: {
+            id: updatedSubscription!.doctor._id.toString(),
+            profile: {
+              firstName: updatedSubscription!.doctor.profile.firstName,
+              lastName: updatedSubscription!.doctor.profile.lastName,
+            },
+            specialties: updatedSubscription!.doctor.specialties,
+          },
+          status: updatedSubscription!.status,
+          requestedAt: updatedSubscription!.requestedAt,
+          approvedAt: updatedSubscription!.approvedAt,
+          deniedAt: updatedSubscription!.deniedAt,
+          createdAt: updatedSubscription!.createdAt,
+          updatedAt: updatedSubscription!.updatedAt,
+        };
+
+        request.log.info(
+          {
+            endpoint: '/api/v1/subscriptions/:id',
+            action: 'update_subscription',
+            subscriptionId: id,
+            doctorId: userId,
+            newStatus: body.status,
+          },
+          'Subscription status updated'
+        );
+
+        reply.send({
+          message: `Subscription ${body.status} successfully`,
+          subscription: response,
+        });
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({
+            error: 'Validation error',
+            details: error.errors,
+          });
+        }
+
+        request.log.error(
+          {
+            endpoint: '/api/v1/subscriptions/:id',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          'Error updating subscription'
+        );
+
+        reply.code(500).send({ error: 'Internal server error' });
       }
-
-      reply
-        .code(200)
-        .send({ message: 'Subscription status updated to denied.' });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return reply
-          .code(400)
-          .send({ message: 'Invalid request body.', issues: error.issues });
-      }
-      fastify.log.error(error, 'Failed to update subscription');
-      reply.code(500).send({ message: 'An error occurred.' });
     }
-  });
+  );
 }

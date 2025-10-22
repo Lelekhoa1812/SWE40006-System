@@ -1,0 +1,115 @@
+{
+  "name": "Patient",
+  "description": "Patient schema extending User with medical information",
+  "extends": "User",
+  "fields": {
+    "medicalHistory": {
+      "type": "array",
+      "description": "Patient's medical history",
+      "items": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string",
+            "required": true
+          },
+          "diagnosedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "resolved", "chronic"],
+            "default": "active"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      }
+    },
+    "allergies": {
+      "type": "array",
+      "description": "List of known allergies",
+      "items": {
+        "type": "object",
+        "properties": {
+          "allergen": {
+            "type": "string",
+            "required": true
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["mild", "moderate", "severe"],
+            "required": true
+          },
+          "reaction": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "emergencyContact": {
+      "type": "object",
+      "description": "Emergency contact information",
+      "properties": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "relationship": {
+          "type": "string",
+          "required": true
+        },
+        "phone": {
+          "type": "string",
+          "pattern": "^\\+?[1-9]\\d{1,14}$",
+          "required": true
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    },
+    "insurance": {
+      "type": "object",
+      "description": "Insurance information",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "policyNumber": {
+          "type": "string"
+        },
+        "groupNumber": {
+          "type": "string"
+        },
+        "isValid": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "preferredLanguage": {
+      "type": "string",
+      "description": "Preferred language for communication",
+      "default": "en"
+    },
+    "timezone": {
+      "type": "string",
+      "description": "Patient's timezone",
+      "default": "UTC"
+    }
+  },
+  "indexes": [
+    {
+      "fields": ["role", "isActive"]
+    },
+    {
+      "fields": ["createdAt"]
+    }
+  ]
+}
