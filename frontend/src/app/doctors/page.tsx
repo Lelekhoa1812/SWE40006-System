@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -12,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { fetchJson } from '@/lib/api';
 import { DoctorCard } from '@/components/doctor-card';
 import { DoctorCardSkeleton } from '@/components/doctor-card-skeleton';
@@ -93,19 +91,6 @@ const specialties = [
   'urology',
 ];
 
-const DoctorCardSkeleton = () => (
-  <Card>
-    <CardHeader>
-      <Skeleton className="h-6 w-3/4" />
-      <Skeleton className="h-4 w-1/2" />
-    </CardHeader>
-    <CardContent>
-      <Skeleton className="h-4 w-full mb-2" />
-      <Skeleton className="h-4 w-2/3" />
-    </CardContent>
-  </Card>
-);
-
 export default function DoctorsPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -170,7 +155,7 @@ export default function DoctorsPage() {
         setIsLoading(false);
       }
     },
-    [searchTerm, selectedSpecialty, city, state, minRating]
+    [searchTerm, selectedSpecialty, city, state, minRating, toast]
   );
 
   useEffect(() => {
@@ -252,7 +237,7 @@ export default function DoctorsPage() {
                 <SelectValue placeholder="Min Rating" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Rating</SelectItem>
+                <SelectItem value="0">Any Rating</SelectItem>
                 <SelectItem value="4">4+ Stars</SelectItem>
                 <SelectItem value="3">3+ Stars</SelectItem>
                 <SelectItem value="2">2+ Stars</SelectItem>

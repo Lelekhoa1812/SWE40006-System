@@ -51,18 +51,6 @@ export default function AdminAuditPage() {
 
   const limitOptions = [25, 50, 100];
 
-  useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
-      router.push('/auth/login');
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      void fetchAuditLogs();
-    }
-  }, [user, page, limit, actionFilter, fetchAuditLogs]);
-
   const fetchAuditLogs = async () => {
     setLoading(true);
     setError(null);
@@ -90,6 +78,18 @@ export default function AdminAuditPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!authLoading && (!user || user.role !== 'admin')) {
+      router.push('/auth/login');
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      void fetchAuditLogs();
+    }
+  }, [user, page, limit, actionFilter, fetchAuditLogs]);
 
   const filteredLogs = logs.filter((log) => {
     if (!searchTerm) return true;
