@@ -1,0 +1,112 @@
+{
+  "name": "Subscription",
+  "description": "Subscription schema for patient-doctor relationships",
+  "fields": {
+    "id": {
+      "type": "string",
+      "description": "Unique subscription identifier",
+      "required": true,
+      "index": "unique"
+    },
+    "patientId": {
+      "type": "string",
+      "description": "ID of the patient requesting subscription",
+      "required": true,
+      "index": "index"
+    },
+    "doctorId": {
+      "type": "string",
+      "description": "ID of the doctor being subscribed to",
+      "required": true,
+      "index": "index"
+    },
+    "status": {
+      "type": "string",
+      "description": "Subscription status",
+      "required": true,
+      "enum": ["requested", "approved", "denied", "cancelled"],
+      "default": "requested",
+      "index": "index"
+    },
+    "requestMessage": {
+      "type": "string",
+      "description": "Optional message from patient with the request",
+      "maxLength": 500
+    },
+    "responseMessage": {
+      "type": "string",
+      "description": "Optional message from doctor with the response",
+      "maxLength": 500
+    },
+    "requestedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the subscription was requested",
+      "required": true,
+      "index": "index"
+    },
+    "respondedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the doctor responded to the request"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the subscription expires (if applicable)"
+    },
+    "isActive": {
+      "type": "boolean",
+      "description": "Whether the subscription is currently active",
+      "default": true,
+      "index": "index"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for the subscription",
+      "properties": {
+        "consentGiven": {
+          "type": "boolean",
+          "description": "Whether patient gave consent for data sharing"
+        },
+        "consentDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "privacyPolicyVersion": {
+          "type": "string",
+          "description": "Version of privacy policy when consent was given"
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Record creation timestamp",
+      "index": "index"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    }
+  },
+  "indexes": [
+    {
+      "fields": ["patientId", "doctorId"],
+      "unique": true
+    },
+    {
+      "fields": ["patientId", "status"]
+    },
+    {
+      "fields": ["doctorId", "status"]
+    },
+    {
+      "fields": ["status", "requestedAt"]
+    },
+    {
+      "fields": ["isActive", "status"]
+    }
+  ]
+}
