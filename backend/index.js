@@ -845,6 +845,7 @@ server.get('/api/v1/chat/messages/:subscriptionId', async (request, reply) => {
 
         return {
           ...message.toObject(),
+          senderRole: message.senderRole, // Explicitly include senderRole field
           fromUserId: fromUser
             ? {
                 _id: fromUser._id,
