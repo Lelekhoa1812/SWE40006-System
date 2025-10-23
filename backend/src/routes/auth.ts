@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { User } from '../database/models/User';
+import { Doctor } from '../database/models/Doctor';
 import { writeAudit } from '../middleware/audit';
 
 // Zod schemas for validation
@@ -10,6 +11,19 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   role: z.enum(['patient', 'doctor', 'admin']).default('patient'),
+  profile: z
+    .object({
+      firstName: z.string().min(1).max(50),
+      lastName: z.string().min(1).max(50),
+      phone: z.string().optional(),
+      dateOfBirth: z.string().optional(),
+      gender: z
+        .enum(['male', 'female', 'other', 'prefer_not_to_say'])
+        .optional(),
+    })
+    .optional(),
+  medicalLicense: z.string().optional(),
+  specialties: z.array(z.string()).optional(),
 });
 
 const loginSchema = z.object({
@@ -72,12 +86,15 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const body = registerSchema.parse(request.body);
 
-        // Check if user already exists
+        // Check if user already exists in both User and Doctor collections
         const existingUser = await User.findOne({
           $or: [{ email: body.email }, { username: body.username }],
         });
+        const existingDoctor = await Doctor.findOne({
+          $or: [{ email: body.email }, { username: body.username }],
+        });
 
-        if (existingUser) {
+        if (existingUser || existingDoctor) {
           reply.code(400).send({ error: 'User already exists' });
           return;
         }
@@ -85,15 +102,45 @@ export async function authRoutes(fastify: FastifyInstance) {
         // Hash password
         const hashedPassword = await bcrypt.hash(body.password, 12);
 
-        // Create user
-        const user = new User({
-          username: body.username,
-          email: body.email,
-          password: hashedPassword,
-          role: body.role,
-        });
+        let user;
+        if (body.role === 'doctor') {
+          // Create doctor in Doctor schema
+          const doctor = new Doctor({
+            username: body.username,
+            email: body.email,
+            password: hashedPassword,
+            role: body.role,
+            profile: body.profile || {
+              firstName: '',
+              lastName: '',
+            },
+            medicalLicense: body.medicalLicense || '',
+            specialties: body.specialties || [],
+            rating: 0,
+            reviewCount: 0,
+            languages: ['English'],
+            isActive: true,
+            emailVerified: false,
+          });
 
-        await user.save();
+          await doctor.save();
+          user = doctor;
+        } else {
+          // Create patient in User schema
+          const patient = new User({
+            username: body.username,
+            email: body.email,
+            password: hashedPassword,
+            role: body.role,
+            profile: body.profile || {
+              firstName: '',
+              lastName: '',
+            },
+          });
+
+          await patient.save();
+          user = patient;
+        }
 
         // Set session
         (request.session as any).userId = (user._id as any).toString();
@@ -133,8 +180,11 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const body = loginSchema.parse(request.body);
 
-        // Find user by email
-        const user = await User.findOne({ email: body.email });
+        // Find user by email in both User and Doctor collections
+        let user = await User.findOne({ email: body.email });
+        if (!user) {
+          user = await Doctor.findOne({ email: body.email });
+        }
         if (!user) {
           reply.code(401).send({ error: 'Invalid credentials' });
           return;

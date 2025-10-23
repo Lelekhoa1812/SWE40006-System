@@ -19,6 +19,10 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     role: 'patient',
+    firstName: '',
+    lastName: '',
+    medicalLicense: '',
+    specialties: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,11 +46,32 @@ export default function RegisterPage() {
     }
 
     try {
+      const registrationData = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        profile: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        },
+        ...(formData.role === 'doctor' && {
+          medicalLicense: formData.medicalLicense,
+          specialties: formData.specialties
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s),
+        }),
+      };
+
       await register(
-        formData.username,
-        formData.email,
-        formData.password,
-        formData.role
+        registrationData.username,
+        registrationData.email,
+        registrationData.password,
+        registrationData.role,
+        registrationData.profile,
+        registrationData.medicalLicense,
+        registrationData.specialties
       );
       // Redirect to dashboard or home page
       router.push('/doctors');
@@ -136,6 +161,68 @@ export default function RegisterPage() {
                   <option value="doctor">Doctor</option>
                 </Select>
               </div>
+
+              <div>
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  required
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  required
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="mt-1"
+                />
+              </div>
+
+              {formData.role === 'doctor' && (
+                <>
+                  <div>
+                    <Label htmlFor="medicalLicense">
+                      Medical License Number
+                    </Label>
+                    <Input
+                      id="medicalLicense"
+                      name="medicalLicense"
+                      type="text"
+                      required
+                      value={formData.medicalLicense}
+                      onChange={handleChange}
+                      className="mt-1"
+                      placeholder="e.g., MD123456"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="specialties">
+                      Specialties (comma-separated)
+                    </Label>
+                    <Input
+                      id="specialties"
+                      name="specialties"
+                      type="text"
+                      required
+                      value={formData.specialties}
+                      onChange={handleChange}
+                      className="mt-1"
+                      placeholder="e.g., cardiology, internal medicine"
+                    />
+                  </div>
+                </>
+              )}
 
               <div>
                 <Label htmlFor="password">Password</Label>

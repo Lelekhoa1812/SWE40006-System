@@ -59,8 +59,8 @@ This directory contains project documentation, architecture decisions, and devel
 
 ### 🚀 Live Applications
 
-- **Frontend**: https://frontend-six-taupe-98.vercel.app/
-- **Backend**: https://medmsg-railway-production.up.railway.app
+- **Frontend (Vercel)**: https://frontend-n5i5s1diy-lelekhoa1812s-projects.vercel.app
+- **Backend (Railway)**: https://medmsg-railway-production.up.railway.app
 
 ### 📊 Key Metrics
 

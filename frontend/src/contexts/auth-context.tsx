@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await fetch(
-        'https://medmsg-railway-production.up.railway.app/api/v1/auth/login',
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/login`,
         {
           method: 'POST',
           headers: {
@@ -88,17 +88,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     username: string,
     email: string,
     password: string,
-    role: string
+    role: string,
+    profile?: {
+      firstName: string;
+      lastName: string;
+      phone?: string;
+      dateOfBirth?: string;
+      gender?: string;
+    },
+    medicalLicense?: string,
+    specialties?: string[]
   ) => {
     try {
+      const registrationData: {
+        username: string;
+        email: string;
+        password: string;
+        role: string;
+        profile?: typeof profile;
+        medicalLicense?: string;
+        specialties?: string[];
+      } = { username, email, password, role };
+
+      // Add profile data if provided
+      if (profile) {
+        registrationData.profile = profile;
+      }
+
+      // Add doctor-specific fields if role is doctor
+      if (role === 'doctor') {
+        if (medicalLicense) {
+          registrationData.medicalLicense = medicalLicense;
+        }
+        if (specialties && specialties.length > 0) {
+          registrationData.specialties = specialties;
+        }
+      }
+
       const response = await fetch(
-        'https://medmsg-railway-production.up.railway.app/api/v1/auth/register',
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/register`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ username, email, password, role }),
+          body: JSON.stringify(registrationData),
         }
       );
 

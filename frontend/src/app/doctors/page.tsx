@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { SubscriptionModal } from '@/components/subscription-modal';
+import { useAuth } from '@/contexts/auth-context';
+import Link from 'next/link';
 
 // Simple SVG icons
 const Search = ({ className }: { className?: string }) => (
@@ -117,37 +120,22 @@ interface Doctor {
   consultationFee?: number;
 }
 
-function DoctorCard({ doctor }: { doctor: Doctor }) {
+function DoctorCard({
+  doctor,
+  onSubscribe,
+}: {
+  doctor: Doctor;
+  onSubscribe: (doctorId: string, doctorName: string) => void;
+}) {
   const fullName = `${doctor.profile.firstName} ${doctor.profile.lastName}`;
   const location = doctor.location
     ? `${doctor.location.city}, ${doctor.location.state}`
     : 'Location not specified';
 
-  const handleSubscribe = async () => {
-    try {
-      const response = await fetch(
-        'https://medmsg-railway-production.up.railway.app/api/v1/subscriptions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            doctorId: doctor.id,
-            requestMessage: `I would like to subscribe to ${fullName} for medical consultations.`,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        alert('Subscription request sent successfully!');
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
-      }
-    } catch (error) {
-      alert('Failed to send subscription request');
-    }
+  const handleSubscribe = () => {
+    console.log('🔍 Doctor object:', doctor);
+    console.log('🔍 Doctor ID:', doctor._id || doctor.id);
+    onSubscribe(doctor._id || doctor.id, fullName);
   };
 
   const handleChat = () => {
@@ -233,10 +221,20 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
 }
 
 export default function DoctorsPage() {
+  const { user, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [subscriptionModal, setSubscriptionModal] = useState<{
+    isOpen: boolean;
+    doctorId: string;
+    doctorName: string;
+  }>({
+    isOpen: false,
+    doctorId: '',
+    doctorName: '',
+  });
 
   const loadDoctors = useCallback(async (searchQuery = '') => {
     setError(null);
@@ -252,7 +250,7 @@ export default function DoctorsPage() {
       }
 
       const response = await fetch(
-        `https://medmsg-railway-production.up.railway.app/api/v1/doctors?${params.toString()}`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/doctors?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -274,8 +272,117 @@ export default function DoctorsPage() {
     loadDoctors();
   }, [loadDoctors]);
 
+  // Show loading state while auth is being checked
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is a doctor, redirect to doctor dashboard
+  if (user?.role === 'doctor') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Doctor Portal
+          </h1>
+          <p className="text-lg text-gray-600">
+            Welcome, Dr. {user.username}! Access your dashboard to manage
+            patient requests.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Link href="/doctors/dashboard">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                Go to Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const handleSearch = () => {
     loadDoctors(searchTerm);
+  };
+
+  const handleSubscribe = (doctorId: string, doctorName: string) => {
+    setSubscriptionModal({
+      isOpen: true,
+      doctorId,
+      doctorName,
+    });
+  };
+
+  const handleSubscriptionConfirm = async (message: string) => {
+    try {
+      console.log('🔍 Subscription Modal State:', subscriptionModal);
+
+      if (!subscriptionModal.doctorId) {
+        console.error('❌ No doctorId in subscription modal');
+        alert('Error: Doctor ID is missing. Please try again.');
+        return;
+      }
+
+      const requestData = {
+        doctorId: subscriptionModal.doctorId,
+        requestMessage: message,
+      };
+
+      console.log('🔍 Subscription Request Debug:', {
+        doctorId: subscriptionModal.doctorId,
+        requestMessage: message,
+        fullRequestData: requestData,
+        doctorIdType: typeof subscriptionModal.doctorId,
+        requestMessageType: typeof message,
+        doctorIdValue: subscriptionModal.doctorId,
+        isEmpty: !subscriptionModal.doctorId,
+      });
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/subscriptions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      console.log('📡 Subscription Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Subscription Success:', result);
+        alert('Subscription request sent successfully!');
+      } else {
+        const error = await response.json();
+        console.error('❌ Subscription Error:', error);
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('💥 Subscription Exception:', error);
+      alert('Failed to send subscription request');
+    }
+  };
+
+  const handleSubscriptionClose = () => {
+    setSubscriptionModal({
+      isOpen: false,
+      doctorId: '',
+      doctorName: '',
+    });
   };
 
   return (
@@ -349,12 +456,23 @@ export default function DoctorsPage() {
                 </div>
               ) : (
                 doctors.map((doctor) => (
-                  <DoctorCard key={doctor.id} doctor={doctor} />
+                  <DoctorCard
+                    key={doctor.id}
+                    doctor={doctor}
+                    onSubscribe={handleSubscribe}
+                  />
                 ))
               ))}
           </div>
         </div>
       </div>
+
+      <SubscriptionModal
+        isOpen={subscriptionModal.isOpen}
+        onClose={handleSubscriptionClose}
+        onConfirm={handleSubscriptionConfirm}
+        doctorName={subscriptionModal.doctorName}
+      />
     </div>
   );
 }

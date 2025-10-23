@@ -201,7 +201,15 @@ server.get('/api/v1/health', async () => {
 // Auth routes
 server.post('/api/v1/auth/register', async (request, reply) => {
   try {
-    const { username, email, password, role } = request.body;
+    const {
+      username,
+      email,
+      password,
+      role,
+      profile,
+      medicalLicense,
+      specialties,
+    } = request.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
@@ -212,15 +220,45 @@ server.post('/api/v1/auth/register', async (request, reply) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
-    const user = new User({
-      username,
-      email,
-      password: hashedPassword,
-      role,
-    });
+    let user;
+    if (role === 'doctor') {
+      // Create doctor in Doctor schema
+      const doctor = new Doctor({
+        username,
+        email,
+        password: hashedPassword,
+        role,
+        profile: profile || {
+          firstName: '',
+          lastName: '',
+        },
+        medicalLicense: medicalLicense || '',
+        specialties: specialties || [],
+        rating: 0,
+        reviewCount: 0,
+        languages: ['English'],
+        isActive: true,
+        emailVerified: false,
+      });
 
-    await user.save();
+      await doctor.save();
+      user = doctor;
+    } else {
+      // Create patient in User schema
+      const patient = new User({
+        username,
+        email,
+        password: hashedPassword,
+        role,
+        profile: profile || {
+          firstName: '',
+          lastName: '',
+        },
+      });
+
+      await patient.save();
+      user = patient;
+    }
 
     // Log audit
     await AuditLog.create({
@@ -245,8 +283,12 @@ server.post('/api/v1/auth/login', async (request, reply) => {
   try {
     const { email, password } = request.body;
 
-    // Find user
-    const user = await User.findOne({ email });
+    // Find user in both User and Doctor schemas
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await Doctor.findOne({ email });
+    }
+
     if (!user) {
       return reply.code(401).send({ error: 'Invalid credentials' });
     }
@@ -345,7 +387,55 @@ server.get('/api/v1/doctors', async (request, reply) => {
 // Subscription routes
 server.post('/api/v1/subscriptions', async (request, reply) => {
   try {
+    // Add comprehensive logging
+    request.log.info('Subscription request received:', {
+      body: request.body,
+      headers: request.headers,
+      user: request.user,
+      ip: request.ip,
+    });
+
     const { doctorId, requestMessage } = request.body;
+
+    // Log the parsed data
+    request.log.info('Parsed subscription data:', {
+      doctorId,
+      requestMessage,
+      doctorIdType: typeof doctorId,
+      requestMessageType: typeof requestMessage,
+    });
+
+    // Validate required fields
+    if (!doctorId || !requestMessage) {
+      request.log.error('Missing required fields:', {
+        doctorId: !!doctorId,
+        requestMessage: !!requestMessage,
+        doctorIdValue: doctorId,
+        requestMessageValue: requestMessage,
+      });
+      return reply.code(400).send({
+        error: 'doctorId and requestMessage are required',
+        received: {
+          doctorId: !!doctorId,
+          requestMessage: !!requestMessage,
+        },
+      });
+    }
+
+    // Validate doctorId format (MongoDB ObjectId)
+    if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+      return reply.code(400).send({
+        error: 'Invalid doctorId format',
+      });
+    }
+
+    // Check if doctor exists
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return reply.code(404).send({
+        error: 'Doctor not found',
+      });
+    }
 
     // Get patient ID from session or use test ID
     const patientId = request.user?.id || '68fa4142885c903d84b6868d';
@@ -358,8 +448,35 @@ server.post('/api/v1/subscriptions', async (request, reply) => {
     });
 
     if (existingSubscription) {
-      return reply.code(400).send({
-        error: 'Subscription request already exists or is approved',
+      request.log.info('Subscription already exists:', {
+        existingId: existingSubscription._id,
+        status: existingSubscription.status,
+        patientId,
+        doctorId,
+      });
+
+      // If it's already approved, return success
+      if (existingSubscription.status === 'approved') {
+        return reply.send({
+          message: 'Subscription already approved',
+          subscription: {
+            id: existingSubscription._id,
+            status: existingSubscription.status,
+          },
+        });
+      }
+
+      // If it's still requested, update the request message
+      existingSubscription.requestMessage = requestMessage;
+      existingSubscription.requestedAt = new Date();
+      await existingSubscription.save();
+
+      return reply.send({
+        message: 'Subscription request updated',
+        subscription: {
+          id: existingSubscription._id,
+          status: existingSubscription.status,
+        },
       });
     }
 
@@ -369,8 +486,18 @@ server.post('/api/v1/subscriptions', async (request, reply) => {
       doctorId,
       status: 'requested',
       requestMessage,
-      requestedAt: new Date(),
       isActive: true,
+      metadata: {
+        consentGiven: false,
+      },
+      requestedAt: new Date(),
+    });
+
+    request.log.info('Subscription created successfully:', {
+      subscriptionId: subscription._id,
+      patientId,
+      doctorId,
+      status: subscription.status,
     });
 
     // Log audit
@@ -457,6 +584,27 @@ server.patch('/api/v1/subscriptions/:id', async (request, reply) => {
     return reply.send({
       message: `Subscription ${status} successfully`,
       subscription,
+    });
+  } catch (error) {
+    request.log.error(error);
+    return reply.code(500).send({ error: 'Internal server error' });
+  }
+});
+
+// Clean up subscriptions for testing
+server.delete('/api/v1/subscriptions/cleanup', async (request, reply) => {
+  try {
+    const result = await Subscription.deleteMany({
+      status: { $in: ['requested', 'denied'] },
+    });
+
+    request.log.info('Cleaned up subscriptions:', {
+      deletedCount: result.deletedCount,
+    });
+
+    return reply.send({
+      message: 'Cleanup completed',
+      deletedCount: result.deletedCount,
     });
   } catch (error) {
     request.log.error(error);
@@ -1073,3 +1221,4 @@ const start = async () => {
 };
 
 start();
+// Force restart - Fri Oct 24 04:31:15 AEDT 2025

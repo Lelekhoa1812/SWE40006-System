@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-// Hardcode the API URL for now to ensure it's properly embedded
-const apiBaseUrl = 'https://medmsg-railway-production.up.railway.app';
+// Use environment variable or default to local backend for development
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
 const EnvSchema = z.object({
   NEXT_PUBLIC_API_BASE_URL: z
