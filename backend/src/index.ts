@@ -1,14 +1,11 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import session from '@fastify/session';
-import MongoStore from 'connect-mongo';
-import { healthRoutes } from './routes/health';
-import { doctorRoutes } from './routes/doctors';
-import { subscriptionRoutes } from './routes/subscriptions';
-import { messageRoutes } from './routes/messages';
-import { authRoutes } from './routes/auth';
-import { env } from './env';
-import { connectToDatabase } from './database/connection';
+import { Server } from 'socket.io';
+import { healthRoutes } from './routes/health.js';
+import { doctorRoutes } from './routes/doctors.js';
+import { subscriptionRoutes } from './routes/subscriptions.js';
+import { messageRoutes } from './routes/messages.js';
+import { env } from './env.js';
 
 const fastify = Fastify({
   logger: {
@@ -58,18 +55,25 @@ fastify.register(cors, {
   credentials: true,
 });
 
-// Register session
-fastify.register(session, {
-  secret: env.SESSION_SECRET,
-  cookie: {
-    secure: env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
-  store: MongoStore.create({
-    mongoUrl: env.MONGODB_URI,
-  }),
+// Socket.io server
+const io = new Server(fastify.server, {
+  cors: { origin: ['http://localhost:3000'], credentials: true },
+});
+
+io.on('connection', (socket) => {
+  console.log('Client connected', socket.id);
+
+  socket.on('joinRoom', (doctorId: string) =>
+    socket.join(`doctor-${doctorId}`)
+  );
+
+  socket.on('sendMessage', ({ doctorId, message, sender }) => {
+    io.to(`doctor-${doctorId}`).emit('receiveMessage', {
+      message,
+      sender,
+      timestamp: new Date().toISOString(),
+    });
+  });
 });
 
 // Register routes
