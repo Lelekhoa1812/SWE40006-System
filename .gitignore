@@ -88,6 +88,8 @@ temp/
 *.swp
 *.swo
 *~
+*.zip
+*.tar
 
 # OS generated files
 .DS_Store
