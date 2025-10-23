@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { fetchJson } from '@/lib/api';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -24,18 +25,9 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetchJson('/api/v1/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.user) {
-        // Redirect to dashboard or home page
-        router.push('/doctors');
-      }
+      await login(formData.email, formData.password);
+      // Redirect to dashboard or home page
+      router.push('/doctors');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

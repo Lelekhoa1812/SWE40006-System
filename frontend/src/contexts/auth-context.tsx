@@ -13,7 +13,12 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (username: string, email: string, password: string, role: string) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string,
+    role: string
+  ) => Promise<void>;
   loading: boolean;
 }
 
@@ -30,25 +35,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      // Mock auth check - in real app, call /api/v1/auth/me
-      setLoading(false);
+      // Check localStorage for existing user
+      const storedUser = localStorage.getItem('user');
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+      if (storedUser && isLoggedIn === 'true') {
+        setUser(JSON.parse(storedUser));
+      }
     } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
       setLoading(false);
     }
   };
 
   const login = async (email: string, password: string) => {
-    // Mock login - in real app, call /api/v1/auth/login
-    console.log('Login:', email, password);
+    try {
+      const response = await fetch(
+        'https://medmsg-railway-production.up.railway.app/api/v1/auth/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user) {
+          setUser(data.user);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('isLoggedIn', 'true');
+        }
+      } else {
+        throw new Error('Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
   };
 
-  const register = async (username: string, email: string, password: string, role: string) => {
-    // Mock register - in real app, call /api/v1/auth/register
-    console.log('Register:', username, email, role);
+  const register = async (
+    username: string,
+    email: string,
+    password: string,
+    role: string
+  ) => {
+    try {
+      const response = await fetch(
+        'https://medmsg-railway-production.up.railway.app/api/v1/auth/register',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, email, password, role }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user) {
+          setUser(data.user);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('isLoggedIn', 'true');
+        }
+      } else {
+        throw new Error('Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
   };
 
   return (

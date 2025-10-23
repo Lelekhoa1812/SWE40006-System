@@ -123,15 +123,37 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
     ? `${doctor.location.city}, ${doctor.location.state}`
     : 'Location not specified';
 
-  const handleSubscribe = () => {
-    alert(
-      `Subscribe to ${fullName} - This would normally open a subscription form`
-    );
+  const handleSubscribe = async () => {
+    try {
+      const response = await fetch(
+        'https://medmsg-railway-production.up.railway.app/api/v1/subscriptions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            doctorId: doctor.id,
+            requestMessage: `I would like to subscribe to ${fullName} for medical consultations.`,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        alert('Subscription request sent successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      alert('Failed to send subscription request');
+    }
   };
 
   const handleChat = () => {
+    // For now, just show an alert - in a real app, this would open a chat interface
     alert(
-      `Start chat with ${fullName} - This would normally open a chat interface`
+      `Chat with ${fullName} - This would open a chat interface for approved subscriptions`
     );
   };
 
@@ -216,7 +238,7 @@ export default function DoctorsPage() {
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
 
-  const loadDoctors = useCallback(async () => {
+  const loadDoctors = useCallback(async (searchQuery = '') => {
     setError(null);
     setIsLoading(true);
     try {
@@ -225,8 +247,8 @@ export default function DoctorsPage() {
         limit: '12',
       });
 
-      if (searchTerm.trim()) {
-        params.append('q', searchTerm.trim());
+      if (searchQuery.trim()) {
+        params.append('q', searchQuery.trim());
       }
 
       const response = await fetch(
@@ -246,14 +268,14 @@ export default function DoctorsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm]);
+  }, []);
 
   useEffect(() => {
     loadDoctors();
   }, [loadDoctors]);
 
   const handleSearch = () => {
-    loadDoctors();
+    loadDoctors(searchTerm);
   };
 
   return (

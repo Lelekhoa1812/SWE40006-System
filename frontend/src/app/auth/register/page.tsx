@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { fetchJson } from '@/lib/api';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -41,25 +42,14 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetchJson('/api/v1/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-        }),
-      });
-
-      if (response.user) {
-        // Redirect to login page or dashboard
-        router.push(
-          '/auth/login?message=Registration successful. Please sign in.'
-        );
-      }
+      await register(
+        formData.username,
+        formData.email,
+        formData.password,
+        formData.role
+      );
+      // Redirect to dashboard or home page
+      router.push('/doctors');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
