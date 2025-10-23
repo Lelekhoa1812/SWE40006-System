@@ -1,14 +1,18 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import session from '@fastify/session';
-import MongoStore from 'connect-mongo';
+//import MongoStore from 'connect-mongo';
 import { healthRoutes } from './routes/health';
 import { doctorRoutes } from './routes/doctors';
 import { subscriptionRoutes } from './routes/subscriptions';
 import { messageRoutes } from './routes/messages';
 import { authRoutes } from './routes/auth';
 import { env } from './env';
-import { connectToDatabase } from './database/connection';
+//import { connectDatabase } from './database/connection';
+//import type { SessionStore } from '@fastify/session';
+import fastifyCookie from '@fastify/cookie';
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUI from '@fastify/swagger-ui';
 
 const fastify = Fastify({
   logger: {
@@ -43,11 +47,38 @@ fastify.addHook('onResponse', async (request, reply) => {
       method: request.method,
       url: request.url,
       statusCode: reply.statusCode,
-      responseTime: reply.getResponseTime(),
+      responseTime: reply.elapsedTime,
     },
     'Request completed'
   );
 });
+
+fastify.register(fastifySwagger, {
+  swagger: {
+    info: {
+      title: 'Medical Messenger API',
+      description: 'API documentation for Medical Messenger backend',
+      version: '1.0.0',
+    },
+    host: 'localhost:4000',
+    schemes: ['http'],
+    consumes: ['application/json'],
+    produces: ['application/json'],
+  },
+});
+
+fastify.register(fastifySwaggerUI, {
+  routePrefix: '/docs',
+  uiConfig: {
+    docExpansion: 'list',
+    deepLinking: false,
+  },
+  staticCSP: true,
+  transformSpecification: (swaggerObject) => swaggerObject,
+  transformSpecificationClone: true,
+});
+
+fastify.register(fastifyCookie);
 
 // Register CORS
 fastify.register(cors, {
@@ -67,9 +98,9 @@ fastify.register(session, {
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
   },
-  store: MongoStore.create({
-    mongoUrl: env.MONGODB_URI,
-  }),
+  // store: MongoStore.create({
+  //   mongoUrl: env.MONGODB_URI,
+  // }) as unknown as SessionStore,
 });
 
 // Register routes
@@ -82,10 +113,10 @@ fastify.register(messageRoutes, { prefix: '/api/v1' });
 const start = async (): Promise<void> => {
   try {
     // Connect to database
-    await connectToDatabase(fastify.log);
+    // await connectDatabase();
 
     const port = env.PORT;
-    await fastify.listen({ port, host: '0.0.0.0' });
+    await fastify.listen({ port, host: 'localhost' });
     fastify.log.info(`Server listening on port ${port}`);
   } catch (err) {
     fastify.log.error(err);

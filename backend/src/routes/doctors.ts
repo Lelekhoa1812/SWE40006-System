@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { DoctorDAO } from '../database/dao/DoctorDAO';
+import { DoctorDAO, DoctorFilters } from '../database/dao/DoctorDAO';
 
 const DoctorResponseSchema = z.object({
   id: z.string(),
@@ -100,7 +100,7 @@ export async function doctorRoutes(fastify: FastifyInstance): Promise<void> {
             minRating,
             isActive: true,
             emailVerified: true,
-          },
+          } as DoctorFilters,
           { page, limit }
         );
 

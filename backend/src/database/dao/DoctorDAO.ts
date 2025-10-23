@@ -80,7 +80,7 @@ export class DoctorDAO {
         .sort({ rating: -1, reviewCount: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .lean(),
+        .lean<IDoctor[]>(),
       Doctor.countDocuments(mongoFilter),
     ]);
 
@@ -99,7 +99,7 @@ export class DoctorDAO {
    * Get doctor by ID
    */
   static async getById(id: string): Promise<IDoctor | null> {
-    return Doctor.findById(id).select('-password').lean();
+    return Doctor.findById(id).select('-password').lean<IDoctor>();
   }
 
   /**
@@ -120,7 +120,8 @@ export class DoctorDAO {
     state?: string,
     pagination: PaginationOptions = { page: 1, limit: 10 }
   ): Promise<DoctorSearchResult> {
-    return this.searchDoctors({ city, state }, pagination);
+    const filters: DoctorFilters = state ? { city, state } : { city };
+    return this.searchDoctors(filters, pagination);
   }
 
   /**
@@ -138,7 +139,7 @@ export class DoctorDAO {
       .select('-password')
       .sort({ rating: -1, reviewCount: -1 })
       .limit(limit)
-      .lean();
+      .lean<IDoctor[]>();
   }
 
   /**

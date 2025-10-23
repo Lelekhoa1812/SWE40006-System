@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IUser extends Document {
+export interface IUser extends Document<string> {
   id: string;
   email: string;
   password: string;
@@ -28,6 +28,7 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
+      index: true,
     },
     password: {
       type: String,
@@ -90,9 +91,9 @@ const UserSchema = new Schema<IUser>(
     toJSON: {
       transform: function (doc, ret) {
         ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        delete ret.password;
+        // delete ret._id;
+        // delete ret.__v;
+        // delete ret.password;
         return ret;
       },
     },
@@ -100,8 +101,6 @@ const UserSchema = new Schema<IUser>(
 );
 
 // Indexes
-UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ role: 1, isActive: 1 });
-UserSchema.index({ createdAt: 1 });
 
 export const User = mongoose.model<IUser>('User', UserSchema);

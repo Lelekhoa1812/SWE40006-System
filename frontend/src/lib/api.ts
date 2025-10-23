@@ -7,18 +7,27 @@ export class ApiError extends Error {
   }
 }
 
-import { env } from '@/env';
+//import { env } from '@/env';
+
+function buildApiUrl(path: string): string {
+  // const baseUrl = env.NEXT_PUBLIC_API_BASE_URL;
+  const baseUrl = 'http://localhost:4000';
+  if (!baseUrl) {
+    throw new Error('NEXT_PUBLIC_API_BASE_URL is not set');
+  }
+
+  const url = `${baseUrl}${path}`;
+
+  return url;
+}
 
 export async function fetchJson<T>(
   path: string,
   init?: globalThis.RequestInit
 ): Promise<T> {
-  const baseUrl = env.NEXT_PUBLIC_API_BASE_URL;
-  if (!baseUrl) {
-    throw new Error('NEXT_PUBLIC_API_BASE_URL is not set');
-  }
-  const url = `${baseUrl}${path}`;
-  const res = await fetch(url, {
+  const url = buildApiUrl(path);
+
+  const resp = await fetch(url, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -27,9 +36,28 @@ export async function fetchJson<T>(
     cache: 'no-store',
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new ApiError(text || res.statusText, res.status);
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new ApiError(text || resp.statusText, resp.status);
   }
-  return (await res.json()) as T;
+
+  const respJson = await resp.json();
+
+  return respJson as T;
+}
+
+export async function postData<T>(path: string, data: object): Promise<T> {
+  const url = buildApiUrl(path);
+
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  const respJson = await resp.json();
+
+  return respJson as T;
 }

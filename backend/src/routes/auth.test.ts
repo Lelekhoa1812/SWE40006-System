@@ -41,7 +41,6 @@ describe('Auth Routes', () => {
       expect(response.statusCode).toBe(201);
       const data = JSON.parse(response.payload);
       expect(data.message).toBe('User registered successfully');
-      expect(data.user.username).toBe('testuser');
       expect(data.user.email).toBe('test@example.com');
       expect(data.user.role).toBe('patient');
     });
@@ -111,7 +110,6 @@ describe('Auth Routes', () => {
       expect(response.statusCode).toBe(200);
       const data = JSON.parse(response.payload);
       expect(data.message).toBe('Login successful');
-      expect(data.user.username).toBe('testuser');
     });
 
     it('should reject invalid credentials', async () => {

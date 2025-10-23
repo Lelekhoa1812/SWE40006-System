@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface ISubscription extends Document {
+export interface ISubscription extends Document<string> {
   id: string;
   patientId: string;
   doctorId: string;
@@ -85,8 +85,8 @@ const SubscriptionSchema = new Schema<ISubscription>(
     toJSON: {
       transform: function (doc, ret) {
         ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
+        // delete ret._id;
+        // delete ret.__v;
         return ret;
       },
     },

@@ -1,8 +1,14 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import {
+  FastifyInstance,
+  FastifyRequest,
+  FastifyReply,
+  RouteGenericInterface,
+} from 'fastify';
 import { z } from 'zod';
-import { Subscription } from '../database/models/Subscription';
+import { ISubscription, Subscription } from '../database/models/Subscription';
 import { Doctor } from '../database/models/Doctor';
 import { authMiddleware } from './auth';
+import type { FlattenMaps } from 'mongoose';
 
 // Zod schemas for validation
 const createSubscriptionSchema = z.object({
@@ -28,13 +34,33 @@ const subscriptionResponseSchema = z.object({
     }),
     specialties: z.array(z.string()),
   }),
-  status: z.enum(['requested', 'approved', 'denied']),
+  status: z.enum(['requested', 'approved', 'denied', 'cancelled']),
   requestedAt: z.date(),
-  approvedAt: z.date().optional(),
-  deniedAt: z.date().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
+
+interface GetByIdRoute extends RouteGenericInterface {
+  Params: {
+    id: string;
+  };
+}
+
+type PopulatedSubscription = FlattenMaps<ISubscription> & {
+  patient: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  doctor: {
+    _id: string;
+    profile: {
+      firstName: string;
+      lastName: string;
+    };
+    specialties: string[];
+  };
+};
 
 type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
 
@@ -90,7 +116,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         )
           .populate('patient', 'username email')
           .populate('doctor', 'profile.firstName profile.lastName specialties')
-          .lean();
+          .lean<PopulatedSubscription>();
 
         const response: SubscriptionResponse = {
           id: populatedSubscription!._id.toString(),
@@ -109,8 +135,6 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
           },
           status: populatedSubscription!.status,
           requestedAt: populatedSubscription!.requestedAt,
-          approvedAt: populatedSubscription!.approvedAt,
-          deniedAt: populatedSubscription!.deniedAt,
           createdAt: populatedSubscription!.createdAt,
           updatedAt: populatedSubscription!.updatedAt,
         };
@@ -175,7 +199,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
           .populate('patient', 'username email')
           .populate('doctor', 'profile.firstName profile.lastName specialties')
           .sort({ createdAt: -1 })
-          .lean();
+          .lean<PopulatedSubscription[]>();
 
         const response: SubscriptionResponse[] = subscriptions.map((sub) => ({
           id: sub._id.toString(),
@@ -194,8 +218,6 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
           },
           status: sub.status,
           requestedAt: sub.requestedAt,
-          approvedAt: sub.approvedAt,
-          deniedAt: sub.deniedAt,
           createdAt: sub.createdAt,
           updatedAt: sub.updatedAt,
         }));
@@ -230,10 +252,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
   fastify.patch(
     '/subscriptions/:id',
     { preHandler: authMiddleware },
-    async (
-      request: FastifyRequest<{ Params: { id: string } }>,
-      reply: FastifyReply
-    ) => {
+    async (request: FastifyRequest<GetByIdRoute>, reply: FastifyReply) => {
       try {
         const { id } = request.params;
         const body = updateSubscriptionSchema.parse(request.body);
@@ -253,7 +272,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         }
 
         // Check if the doctor owns this subscription
-        if (subscription.doctor.toString() !== userId) {
+        if (subscription.doctorId !== userId) {
           return reply.code(403).send({
             error: 'You can only manage your own subscriptions',
           });
@@ -277,7 +296,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         )
           .populate('patient', 'username email')
           .populate('doctor', 'profile.firstName profile.lastName specialties')
-          .lean();
+          .lean<PopulatedSubscription>();
 
         const response: SubscriptionResponse = {
           id: updatedSubscription!._id.toString(),
@@ -296,8 +315,6 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
           },
           status: updatedSubscription!.status,
           requestedAt: updatedSubscription!.requestedAt,
-          approvedAt: updatedSubscription!.approvedAt,
-          deniedAt: updatedSubscription!.deniedAt,
           createdAt: updatedSubscription!.createdAt,
           updatedAt: updatedSubscription!.updatedAt,
         };

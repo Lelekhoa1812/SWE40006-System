@@ -60,7 +60,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Welcome, {user.username}!</CardTitle>
+                <CardTitle>Welcome, {user.email}!</CardTitle>
                 <CardDescription>
                   You are logged in as a {user.role}
                 </CardDescription>

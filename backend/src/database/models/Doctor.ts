@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IDoctor extends Document {
+export interface IDoctor extends Document<string> {
   id: string;
   email: string;
   password: string;
@@ -103,6 +103,7 @@ const DoctorSchema = new Schema<IDoctor>(
       required: true,
       unique: true,
       trim: true,
+      index: true,
     },
     specialties: {
       type: [String],
@@ -113,6 +114,7 @@ const DoctorSchema = new Schema<IDoctor>(
         },
         message: 'At least one specialty is required',
       },
+      index: true,
     },
     bio: {
       type: String,
@@ -230,9 +232,9 @@ const DoctorSchema = new Schema<IDoctor>(
     toJSON: {
       transform: function (doc, ret) {
         ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        delete ret.password;
+        // delete ret._id;
+        // delete ret.__v;
+        // delete ret.password;
         return ret;
       },
     },
@@ -240,8 +242,6 @@ const DoctorSchema = new Schema<IDoctor>(
 );
 
 // Indexes
-DoctorSchema.index({ medicalLicense: 1 }, { unique: true });
-DoctorSchema.index({ specialties: 1 });
 DoctorSchema.index({ 'location.city': 1, 'location.state': 1 });
 DoctorSchema.index({ rating: -1, reviewCount: -1 });
 DoctorSchema.index({ role: 1, isActive: 1, specialties: 1 });

@@ -55,7 +55,7 @@ export function Navbar() {
             ) : user ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600">
-                  Welcome, {user.username}
+                  Welcome, {user.email}
                 </span>
                 <Link href="/dashboard">
                   <Button variant="outline" size="sm">
