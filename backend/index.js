@@ -751,6 +751,10 @@ server.post('/api/v1/chat/messages', async (request, reply) => {
       return reply.code(403).send({ error: 'Access denied' });
     }
 
+    // Determine sender role
+    const isPatient = subscription.patientId.toString() === userId;
+    const senderRole = isPatient ? 'patient' : 'doctor';
+
     // Create message
     const message = await Message.create({
       subscriptionId,
@@ -762,7 +766,17 @@ server.post('/api/v1/chat/messages', async (request, reply) => {
       content,
       messageType,
       status: 'sent',
+      senderRole,
       createdAt: new Date(),
+    });
+
+    request.log.info('Message created successfully:', {
+      messageId: message._id,
+      subscriptionId,
+      fromUserId: message.fromUserId,
+      toUserId: message.toUserId,
+      content: message.content,
+      status: message.status,
     });
 
     // Log audit
@@ -834,15 +848,21 @@ server.get('/api/v1/chat/messages/:subscriptionId', async (request, reply) => {
           fromUserId: fromUser
             ? {
                 _id: fromUser._id,
-                profile: fromUser.profile,
+                profile: fromUser.profile || { firstName: '', lastName: '' },
               }
-            : null,
+            : {
+                _id: message.fromUserId,
+                profile: { firstName: 'Unknown', lastName: 'User' },
+              },
           toUserId: toUser
             ? {
                 _id: toUser._id,
-                profile: toUser.profile,
+                profile: toUser.profile || { firstName: '', lastName: '' },
               }
-            : null,
+            : {
+                _id: message.toUserId,
+                profile: { firstName: 'Unknown', lastName: 'User' },
+              },
         };
       })
     );
