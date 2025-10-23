@@ -1396,7 +1396,28 @@ const start = async () => {
 };
 
 start();
+// Fix existing doctor userId field
+server.post('/api/v1/fix-doctors', async (request, reply) => {
+  try {
+    // Update all doctors that have null userId
+    const result = await Doctor.updateMany(
+      { userId: null },
+      { $set: { userId: new mongoose.Types.ObjectId() } }
+    );
+
+    return reply.send({
+      message: 'Doctors updated successfully',
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    return reply
+      .code(500)
+      .send({ error: 'Failed to fix doctors', details: error.message });
+  }
+});
+
 // Force restart - Fri Oct 24 04:31:15 AEDT 2025
 // Force restart for doctor registration fix - Fri Oct 24 05:15:42 AEDT 2025
 // Force restart - Fri Oct 24 09:09:54 AEDT 2025
+// Force restart - Fri Oct 24 11:15:30 AEDT 2025
 console.log('Server restarted at:', new Date());
