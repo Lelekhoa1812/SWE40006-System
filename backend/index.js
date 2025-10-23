@@ -47,6 +47,9 @@ server.register(cors, {
   origin: [
     'http://localhost:3000',
     'https://medmsg-frontend.azurewebsites.net',
+    'https://frontend-dgce2pwe0-lelekhoa1812s-projects.vercel.app',
+    'https://frontend-l57pkloup-lelekhoa1812s-projects.vercel.app',
+    /^https:\/\/frontend-.*\.vercel\.app$/,
   ],
   credentials: true,
 });

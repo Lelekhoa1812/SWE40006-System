@@ -110,7 +110,7 @@ Create `.env` files from the provided samples.
 **`/frontend/.env.local`**
 
 ```
-NEXT_PUBLIC_API_BASE_URL=https://medmsg-blue.azurewebsites.net
+NEXT_PUBLIC_API_BASE_URL=https://medmsg-railway-production.up.railway.app
 ```
 
 **`/backend/.env`**
@@ -133,15 +133,15 @@ In **two terminals**:
 # Terminal 1: backend
 cd backend
 pnpm dev
-# Fastify on https://medmsg-blue.azurewebsites.net
-# Try: curl https://medmsg-blue.azurewebsites.net/health
+# Fastify on https://medmsg-railway-production.up.railway.app
+# Try: curl https://medmsg-railway-production.up.railway.app/health
 ```
 
 ```bash
 # Terminal 2: frontend
 cd frontend
 pnpm dev
-# Next.js on https://medmsg-frontend-static.azurewebsites.net
+# Next.js on https://frontend-six-taupe-98.vercel.app/
 # Visit /doctors to see directory
 ```
 

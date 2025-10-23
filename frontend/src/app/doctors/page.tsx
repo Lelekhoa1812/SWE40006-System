@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 // Simple SVG icons
 const Search = ({ className }: { className?: string }) => (
@@ -22,7 +22,13 @@ const Search = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const Filter = ({ className }: { className?: string }) => (
+const Star = ({ className }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+  </svg>
+);
+
+const MapPin = ({ className }: { className?: string }) => (
   <svg
     className={className}
     fill="none"
@@ -33,12 +39,18 @@ const Filter = ({ className }: { className?: string }) => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
-      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
     />
   </svg>
 );
 
-const ChevronLeft = ({ className }: { className?: string }) => (
+const Phone = ({ className }: { className?: string }) => (
   <svg
     className={className}
     fill="none"
@@ -49,12 +61,12 @@ const ChevronLeft = ({ className }: { className?: string }) => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
-      d="M15 19l-7-7 7-7"
+      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
     />
   </svg>
 );
 
-const ChevronRight = ({ className }: { className?: string }) => (
+const Mail = ({ className }: { className?: string }) => (
   <svg
     className={className}
     fill="none"
@@ -65,167 +77,183 @@ const ChevronRight = ({ className }: { className?: string }) => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
-      d="M9 5l7 7-7 7"
+      d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
     />
   </svg>
 );
-import { fetchJson } from '@/lib/api';
-import { DoctorCard } from '@/components/doctor-card';
-import { DoctorCardSkeleton } from '@/components/doctor-card-skeleton';
-import { useToast } from '@/components/ui/use-toast';
+
+const MessageCircle = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+    />
+  </svg>
+);
 
 interface Doctor {
   id: string;
   email: string;
-  role: string;
   profile: {
     firstName: string;
     lastName: string;
     phone?: string;
-    dateOfBirth?: string;
-    gender?: string;
-    avatar?: string;
   };
-  medicalLicense: string;
   specialties: string[];
   bio?: string;
   location?: {
-    address?: string;
     city: string;
     state: string;
-    country: string;
-    postalCode?: string;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
-  };
-  availability?: {
-    timezone: string;
-    schedule: Array<{
-      day: string;
-      startTime: string;
-      endTime: string;
-      isAvailable: boolean;
-    }>;
   };
   rating: number;
   reviewCount: number;
   consultationFee?: number;
-  languages: string[];
-  isActive: boolean;
-  emailVerified: boolean;
-  lastLoginAt?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-interface DoctorsResponse {
-  doctors: Doctor[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+function DoctorCard({ doctor }: { doctor: Doctor }) {
+  const fullName = `${doctor.profile.firstName} ${doctor.profile.lastName}`;
+  const location = doctor.location
+    ? `${doctor.location.city}, ${doctor.location.state}`
+    : 'Location not specified';
+
+  const handleSubscribe = () => {
+    alert(
+      `Subscribe to ${fullName} - This would normally open a subscription form`
+    );
   };
-}
 
-const specialties = [
-  'All Specialties',
-  'cardiology',
-  'dermatology',
-  'endocrinology',
-  'gastroenterology',
-  'general_practice',
-  'neurology',
-  'oncology',
-  'orthopedics',
-  'pediatrics',
-  'psychiatry',
-  'radiology',
-  'surgery',
-  'urology',
-];
+  const handleChat = () => {
+    alert(
+      `Start chat with ${fullName} - This would normally open a chat interface`
+    );
+  };
+
+  return (
+    <Card className="h-full flex flex-col">
+      <CardHeader>
+        <div className="font-semibold text-lg">{fullName}</div>
+        <div className="text-sm text-gray-500">
+          {doctor.specialties
+            .map((s) =>
+              s.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+            )
+            .join(', ')}
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col">
+        <div className="text-sm text-gray-700 space-y-2 flex-1">
+          {doctor.rating > 0 && (
+            <div className="flex items-center space-x-1">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span>{doctor.rating.toFixed(1)}</span>
+              <span className="text-gray-500">
+                ({doctor.reviewCount} reviews)
+              </span>
+            </div>
+          )}
+
+          {doctor.location && (
+            <div className="flex items-center space-x-1 text-gray-600">
+              <MapPin className="h-4 w-4" />
+              <span>{location}</span>
+            </div>
+          )}
+
+          {doctor.profile.phone && (
+            <div className="flex items-center space-x-1 text-gray-600">
+              <Phone className="h-4 w-4" />
+              <span>{doctor.profile.phone}</span>
+            </div>
+          )}
+
+          <div className="flex items-center space-x-1 text-gray-600">
+            <Mail className="h-4 w-4" />
+            <span>{doctor.email}</span>
+          </div>
+
+          {doctor.bio && (
+            <div className="text-gray-600 text-xs line-clamp-3">
+              {doctor.bio}
+            </div>
+          )}
+
+          {doctor.consultationFee && (
+            <div className="text-sm font-medium text-green-600">
+              ${(doctor.consultationFee / 100).toFixed(2)} consultation fee
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 pt-4 border-t space-y-2">
+          <Button onClick={handleSubscribe} className="w-full" size="sm">
+            Subscribe
+          </Button>
+          <Button
+            onClick={handleChat}
+            variant="outline"
+            className="w-full"
+            size="sm"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Chat
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function DoctorsPage() {
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSpecialty, setSelectedSpecialty] = useState('All Specialties');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [minRating, setMinRating] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 12,
-    total: 0,
-    totalPages: 0,
-    hasNext: false,
-    hasPrev: false,
-  });
 
-  const loadDoctors = useCallback(
-    async (page = 1) => {
-      setError(null);
-      setIsLoading(true);
-      try {
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: '12',
-        });
+  const loadDoctors = useCallback(async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '12',
+      });
 
-        if (searchTerm.trim()) {
-          params.append('q', searchTerm.trim());
-        }
-        if (selectedSpecialty !== 'All Specialties') {
-          params.append('specialty', selectedSpecialty);
-        }
-        if (city.trim()) {
-          params.append('city', city.trim());
-        }
-        if (state.trim()) {
-          params.append('state', state.trim());
-        }
-        if (minRating) {
-          params.append('minRating', minRating);
-        }
-
-        const data = await fetchJson<DoctorsResponse>(
-          `/api/v1/doctors?${params.toString()}`
-        );
-        setDoctors(data.doctors);
-        setPagination(data.pagination);
-      } catch (e) {
-        const message =
-          e instanceof Error ? e.message : 'Failed to load doctors';
-        setError(message);
-
-        toast({
-          title: 'Failed to Load Doctors',
-          description: message,
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
+      if (searchTerm.trim()) {
+        params.append('q', searchTerm.trim());
       }
-    },
-    [searchTerm, selectedSpecialty, city, state, minRating, toast]
-  );
+
+      const response = await fetch(
+        `https://medmsg-railway-production.up.railway.app/api/v1/doctors?${params.toString()}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch doctors');
+      }
+
+      const data = await response.json();
+      setDoctors(data.doctors || []);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load doctors';
+      setError(message);
+      console.error('Failed to load doctors:', message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm]);
 
   useEffect(() => {
-    void loadDoctors(1);
+    loadDoctors();
   }, [loadDoctors]);
 
   const handleSearch = () => {
-    void loadDoctors(1);
-  };
-
-  const handlePageChange = (newPage: number) => {
-    void loadDoctors(newPage);
+    loadDoctors();
   };
 
   return (
@@ -242,80 +270,35 @@ export default function DoctorsPage() {
         </div>
 
         <div className="max-w-6xl mx-auto space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="lg:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by name, location, or specialty..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Select
-                value={selectedSpecialty}
-                onChange={(e) => setSelectedSpecialty(e.target.value)}
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by name, location, or specialty..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
-              >
-                {specialties.map((specialty) => (
-                  <option key={specialty} value={specialty}>
-                    {specialty === 'All Specialties'
-                      ? 'All Specialties'
-                      : specialty
-                          .replace('_', ' ')
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </option>
-                ))}
-              </Select>
+              />
             </div>
             <Button onClick={handleSearch} disabled={isLoading}>
               {isLoading ? 'Searching...' : 'Search'}
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              placeholder="City"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-            />
-            <Input
-              placeholder="State"
-              value={state}
-              onChange={(e) => setState(e.target.value)}
-            />
-            <Select
-              value={minRating}
-              onChange={(e) => setMinRating(e.target.value)}
-            >
-              <option value="0">Any Rating</option>
-              <option value="4">4+ Stars</option>
-              <option value="3">3+ Stars</option>
-              <option value="2">2+ Stars</option>
-            </Select>
-          </div>
-
-          {!isLoading && !error && pagination.total > 0 && (
-            <div className="text-center text-sm text-gray-600">
-              Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-              {Math.min(pagination.page * pagination.limit, pagination.total)}{' '}
-              of {pagination.total} doctors
-            </div>
-          )}
-
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {isLoading &&
-              Array.from({ length: 6 }).map((_, i) => (
-                <DoctorCardSkeleton key={i} />
-              ))}
+            {isLoading && (
+              <div className="col-span-full text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="mt-2 text-gray-600">Loading doctors...</p>
+              </div>
+            )}
 
             {!isLoading && error && (
               <div className="col-span-full text-center py-12">
                 <p className="text-red-600">{error}</p>
+                <Button onClick={loadDoctors} className="mt-4">
+                  Try Again
+                </Button>
               </div>
             )}
 
@@ -330,21 +313,16 @@ export default function DoctorsPage() {
                     No doctors found
                   </h3>
                   <p className="text-gray-500 mb-4">
-                    Try adjusting your search criteria or filters to find more
-                    doctors.
+                    Try adjusting your search criteria to find more doctors.
                   </p>
                   <Button
                     variant="outline"
                     onClick={() => {
                       setSearchTerm('');
-                      setSelectedSpecialty('All Specialties');
-                      setCity('');
-                      setState('');
-                      setMinRating('');
-                      void loadDoctors(1);
+                      loadDoctors();
                     }}
                   >
-                    Clear Filters
+                    Clear Search
                   </Button>
                 </div>
               ) : (
@@ -353,53 +331,6 @@ export default function DoctorsPage() {
                 ))
               ))}
           </div>
-
-          {!isLoading && !error && pagination.totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={!pagination.hasPrev}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-
-              <div className="flex space-x-1">
-                {Array.from(
-                  { length: Math.min(5, pagination.totalPages) },
-                  (_, i) => {
-                    const pageNum = Math.max(1, pagination.page - 2) + i;
-                    if (pageNum > pagination.totalPages) return null;
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={
-                          pageNum === pagination.page ? 'default' : 'outline'
-                        }
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  }
-                )}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={!pagination.hasNext}
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </div>

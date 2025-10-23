@@ -59,9 +59,8 @@ This directory contains project documentation, architecture decisions, and devel
 
 ### 🚀 Live Applications
 
-- **Frontend**: https://medmsg-frontend.azurewebsites.net
-- **Backend Blue**: https://medmsg-blue.azurewebsites.net
-- **Backend Green**: https://medmsg-green.azurewebsites.net
+- **Frontend**: https://frontend-six-taupe-98.vercel.app/
+- **Backend**: https://medmsg-railway-production.up.railway.app
 
 ### 📊 Key Metrics
 
