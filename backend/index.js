@@ -315,6 +315,10 @@ server.post('/api/v1/auth/register', async (request, reply) => {
         profile,
         medicalLicense,
         specialties,
+        bio: request.body.bio,
+        location: request.body.location,
+        consultationFee: request.body.consultationFee,
+        languages: request.body.languages,
       });
 
       const doctor = new Doctor({
