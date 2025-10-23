@@ -79,7 +79,31 @@ const UserSchema = new mongoose.Schema({
 });
 
 const DoctorSchema = new mongoose.Schema({
-  ...UserSchema.obj,
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: {
+    type: String,
+    enum: ['patient', 'doctor', 'admin'],
+    required: true,
+    default: 'doctor',
+  },
+  profile: {
+    firstName: String,
+    lastName: String,
+    phone: String,
+    dateOfBirth: Date,
+    address: {
+      street: String,
+      city: String,
+      state: String,
+      zipCode: String,
+      country: String,
+    },
+  },
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
   medicalLicense: { type: String, required: true, unique: true },
   specialties: [{ type: String }],
   rating: { type: Number, default: 0 },
@@ -223,6 +247,15 @@ server.post('/api/v1/auth/register', async (request, reply) => {
     let user;
     if (role === 'doctor') {
       // Create doctor in Doctor schema
+      request.log.info('Creating doctor with data:', {
+        username,
+        email,
+        role,
+        profile,
+        medicalLicense,
+        specialties,
+      });
+
       const doctor = new Doctor({
         username,
         email,
@@ -232,17 +265,28 @@ server.post('/api/v1/auth/register', async (request, reply) => {
           firstName: '',
           lastName: '',
         },
-        medicalLicense: medicalLicense || '',
-        specialties: specialties || [],
+        medicalLicense: medicalLicense || `MD${Date.now()}`, // Generate unique license if not provided
+        specialties: specialties || ['general_medicine'],
         rating: 0,
         reviewCount: 0,
         languages: ['English'],
         isActive: true,
         emailVerified: false,
+        userId: new mongoose.Types.ObjectId(), // Generate unique userId to avoid null conflict
       });
 
-      await doctor.save();
-      user = doctor;
+      request.log.info('Doctor object created, attempting to save...');
+      try {
+        await doctor.save();
+        request.log.info('Doctor saved successfully');
+        user = doctor;
+      } catch (saveError) {
+        request.log.error('Error saving doctor:', saveError);
+        return reply.code(400).send({
+          error: 'Failed to create doctor account',
+          details: saveError.message,
+        });
+      }
     } else {
       // Create patient in User schema
       const patient = new User({
@@ -1222,3 +1266,4 @@ const start = async () => {
 
 start();
 // Force restart - Fri Oct 24 04:31:15 AEDT 2025
+// Force restart for doctor registration fix - Fri Oct 24 05:15:42 AEDT 2025
