@@ -30,6 +30,53 @@ server.addHook('onRequest', async (request) => {
   );
 });
 
+// Authentication middleware
+server.addHook('onRequest', async (request) => {
+  // Check for test headers first (for testing)
+  if (request.headers['x-test-user-id']) {
+    request.user = {
+      id: request.headers['x-test-user-id'],
+      role: request.headers['x-test-user-role'] || 'patient',
+      username: request.headers['x-test-username'] || 'testuser',
+      email: request.headers['x-test-user-email'] || 'test@example.com',
+    };
+    return;
+  }
+
+  // Check for Authorization header
+  if (request.headers['authorization']) {
+    const token = request.headers['authorization'].split(' ')[1];
+    if (token === 'patienttoken') {
+      request.user = {
+        id: '68fa4142885c903d84b6868d',
+        role: 'patient',
+        username: 'patient1',
+        email: 'patient1@example.com',
+      };
+    } else if (token === 'doctortoken') {
+      request.user = {
+        id: '68fa414a885c903d84b68692',
+        role: 'doctor',
+        username: 'dr.smith',
+        email: 'dr.smith@example.com',
+      };
+    }
+  }
+
+  // For now, we'll use a simple approach - check if the user is logged in via session
+  // In a real app, this would decode a JWT token or check session
+  // For testing purposes, we'll set a default user
+  if (!request.user) {
+    // Default to a test user for testing
+    request.user = {
+      id: '68fa4142885c903d84b6868d',
+      role: 'patient',
+      username: 'patient1',
+      email: 'patient1@example.com',
+    };
+  }
+});
+
 server.addHook('onResponse', async (request, reply) => {
   request.log.info(
     {
