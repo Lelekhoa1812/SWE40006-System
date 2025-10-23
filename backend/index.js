@@ -126,6 +126,11 @@ const UserSchema = new mongoose.Schema({
 });
 
 const DoctorSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: () => new mongoose.Types.ObjectId(),
+    unique: true,
+  },
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
