@@ -230,6 +230,11 @@ const MessageSchema = new mongoose.Schema({
     enum: ['sent', 'delivered', 'read'],
     default: 'sent',
   },
+  senderRole: {
+    type: String,
+    enum: ['patient', 'doctor'],
+    required: true,
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
