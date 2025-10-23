@@ -1,0 +1,123 @@
+{
+  "name": "Message",
+  "description": "Message schema for chat communications",
+  "fields": {
+    "id": {
+      "type": "string",
+      "description": "Unique message identifier",
+      "required": true,
+      "index": "unique"
+    },
+    "chatId": {
+      "type": "string",
+      "description": "ID of the chat this message belongs to",
+      "required": true,
+      "index": "index"
+    },
+    "senderId": {
+      "type": "string",
+      "description": "ID of the user who sent the message",
+      "required": true,
+      "index": "index"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content",
+      "required": true,
+      "maxLength": 5000
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of message",
+      "required": true,
+      "enum": ["text", "image", "file", "system"],
+      "default": "text"
+    },
+    "attachments": {
+      "type": "array",
+      "description": "Message attachments",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "required": true
+          },
+          "filename": {
+            "type": "string",
+            "required": true
+          },
+          "mimeType": {
+            "type": "string",
+            "required": true
+          },
+          "size": {
+            "type": "number",
+            "minimum": 0
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "isRead": {
+      "type": "boolean",
+      "description": "Whether the message has been read",
+      "default": false,
+      "index": "index"
+    },
+    "readAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the message was read"
+    },
+    "editedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the message was last edited"
+    },
+    "replyTo": {
+      "type": "string",
+      "description": "ID of the message this is replying to"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional message metadata",
+      "properties": {
+        "isEncrypted": {
+          "type": "boolean",
+          "default": false
+        },
+        "encryptionKey": {
+          "type": "string"
+        },
+        "retentionPolicy": {
+          "type": "string",
+          "enum": ["standard", "extended", "permanent"]
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Message creation timestamp",
+      "index": "index"
+    }
+  },
+  "indexes": [
+    {
+      "fields": ["chatId", "createdAt"]
+    },
+    {
+      "fields": ["senderId", "createdAt"]
+    },
+    {
+      "fields": ["isRead", "createdAt"]
+    },
+    {
+      "fields": ["type", "createdAt"]
+    }
+  ]
+}

@@ -50,7 +50,7 @@ fastify.addHook('onResponse', async (request, reply) => {
 fastify.register(cors, {
   origin: [
     'http://localhost:3000',
-    'https://medmsg-frontend-static.azurewebsites.net',
+    'https://medmsg-frontend.azurewebsites.net',
   ],
   credentials: true,
 });
@@ -78,12 +78,16 @@ io.on('connection', (socket) => {
 
 // Register routes
 fastify.register(healthRoutes, { prefix: '' });
+fastify.register(authRoutes, { prefix: '/api/v1/auth' });
 fastify.register(doctorRoutes, { prefix: '/api/v1' });
 fastify.register(subscriptionRoutes, { prefix: '/api/v1' });
 fastify.register(messageRoutes, { prefix: '/api/v1' });
 
 const start = async (): Promise<void> => {
   try {
+    // Connect to database
+    await connectToDatabase(fastify.log);
+
     const port = env.PORT;
     await fastify.listen({ port, host: '0.0.0.0' });
     fastify.log.info(`Server listening on port ${port}`);

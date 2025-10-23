@@ -12,14 +12,17 @@
     "test:run": "vitest run",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:doctors": "tsx --require dotenv/config src/scripts/seed-doctors.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",
     "@fastify/websocket": "^11.2.0",
     "dotenv": "^17.2.3",
+    "express-session": "^1.18.2",
     "fastify": "^4.29.1",
     "mongodb": "^6.20.0",
+    "mongoose": "^8.19.2",
     "pino": "^8.16.2",
     "pino-pretty": "^10.2.3",
     "socket.io": "^4.8.1",

@@ -1,0 +1,109 @@
+{
+  "name": "User",
+  "description": "User schema for authentication and profile management",
+  "fields": {
+    "id": {
+      "type": "string",
+      "description": "Unique user identifier",
+      "required": true,
+      "index": "unique"
+    },
+    "email": {
+      "type": "string",
+      "description": "User email address",
+      "required": true,
+      "unique": true,
+      "index": "unique"
+    },
+    "password": {
+      "type": "string",
+      "description": "Hashed password using bcrypt",
+      "required": true,
+      "minLength": 8
+    },
+    "role": {
+      "type": "string",
+      "description": "User role: patient, doctor, admin",
+      "required": true,
+      "enum": ["patient", "doctor", "admin"],
+      "index": "index"
+    },
+    "profile": {
+      "type": "object",
+      "description": "User profile information",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "required": true,
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "lastName": {
+          "type": "string",
+          "required": true,
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "phone": {
+          "type": "string",
+          "pattern": "^\\+?[1-9]\\d{1,14}$",
+          "description": "Phone number in E.164 format"
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of birth in YYYY-MM-DD format"
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["male", "female", "other", "prefer_not_to_say"]
+        },
+        "avatar": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to user avatar image"
+        }
+      }
+    },
+    "isActive": {
+      "type": "boolean",
+      "description": "Whether the user account is active",
+      "default": true,
+      "index": "index"
+    },
+    "emailVerified": {
+      "type": "boolean",
+      "description": "Whether the user's email is verified",
+      "default": false,
+      "index": "index"
+    },
+    "lastLoginAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last login timestamp"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Account creation timestamp",
+      "index": "index"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    }
+  },
+  "indexes": [
+    {
+      "fields": ["email"],
+      "unique": true
+    },
+    {
+      "fields": ["role", "isActive"]
+    },
+    {
+      "fields": ["createdAt"]
+    }
+  ]
+}

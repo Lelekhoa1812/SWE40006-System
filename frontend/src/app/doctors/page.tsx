@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, Filter } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -14,21 +14,81 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchJson } from '@/lib/api';
-import type { Doctor } from '@/types/doctor';
 import { DoctorCard } from '@/components/doctor-card';
+
+interface Doctor {
+  id: string;
+  email: string;
+  role: string;
+  profile: {
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    avatar?: string;
+  };
+  medicalLicense: string;
+  specialties: string[];
+  bio?: string;
+  location?: {
+    address?: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode?: string;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
+  };
+  availability?: {
+    timezone: string;
+    schedule: Array<{
+      day: string;
+      startTime: string;
+      endTime: string;
+      isAvailable: boolean;
+    }>;
+  };
+  rating: number;
+  reviewCount: number;
+  consultationFee?: number;
+  languages: string[];
+  isActive: boolean;
+  emailVerified: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface DoctorsResponse {
+  doctors: Doctor[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
 
 const specialties = [
   'All Specialties',
-  'Cardiology',
-  'Dermatology',
-  'Endocrinology',
-  'Gastroenterology',
-  'Neurology',
-  'Oncology',
-  'Orthopedics',
-  'Pediatrics',
-  'Psychiatry',
-  'Radiology',
+  'cardiology',
+  'dermatology',
+  'endocrinology',
+  'gastroenterology',
+  'general_practice',
+  'neurology',
+  'oncology',
+  'orthopedics',
+  'pediatrics',
+  'psychiatry',
+  'radiology',
+  'surgery',
+  'urology',
 ];
 
 const DoctorCardSkeleton = () => (
@@ -47,45 +107,74 @@ const DoctorCardSkeleton = () => (
 export default function DoctorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All Specialties');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [minRating, setMinRating] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
 
-  const loadDoctors = useCallback(async () => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      const data = await fetchJson<Doctor[]>('/api/v1/doctors');
-      setDoctors(data);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Failed to load doctors';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const loadDoctors = useCallback(
+    async (page = 1) => {
+      setError(null);
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: '12',
+        });
+
+        if (searchTerm.trim()) {
+          params.append('q', searchTerm.trim());
+        }
+        if (selectedSpecialty !== 'All Specialties') {
+          params.append('specialty', selectedSpecialty);
+        }
+        if (city.trim()) {
+          params.append('city', city.trim());
+        }
+        if (state.trim()) {
+          params.append('state', state.trim());
+        }
+        if (minRating) {
+          params.append('minRating', minRating);
+        }
+
+        const data = await fetchJson<DoctorsResponse>(
+          `/api/v1/doctors?${params.toString()}`
+        );
+        setDoctors(data.doctors);
+        setPagination(data.pagination);
+      } catch (e) {
+        const message =
+          e instanceof Error ? e.message : 'Failed to load doctors';
+        setError(message);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [searchTerm, selectedSpecialty, city, state, minRating]
+  );
 
   useEffect(() => {
-    void loadDoctors();
+    void loadDoctors(1);
   }, [loadDoctors]);
 
   const handleSearch = () => {
-    void loadDoctors();
+    void loadDoctors(1);
   };
 
-  const filteredDoctors = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    return doctors.filter((d) => {
-      const matchesTerm = term
-        ? d.name.toLowerCase().includes(term) ||
-          d.specialty.toLowerCase().includes(term)
-        : true;
-      const matchesSpecialty =
-        selectedSpecialty === 'All Specialties' ||
-        d.specialty === selectedSpecialty;
-      return matchesTerm && matchesSpecialty;
-    });
-  }, [doctors, searchTerm, selectedSpecialty]);
+  const handlePageChange = (newPage: number) => {
+    void loadDoctors(newPage);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -100,9 +189,9 @@ export default function DoctorsPage() {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="lg:col-span-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -117,14 +206,18 @@ export default function DoctorsPage() {
               value={selectedSpecialty}
               onValueChange={setSelectedSpecialty}
             >
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger>
                 <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
+                <SelectValue placeholder="Specialty" />
               </SelectTrigger>
               <SelectContent>
                 {specialties.map((specialty) => (
                   <SelectItem key={specialty} value={specialty}>
-                    {specialty}
+                    {specialty === 'All Specialties'
+                      ? 'All Specialties'
+                      : specialty
+                          .replace('_', ' ')
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -133,6 +226,38 @@ export default function DoctorsPage() {
               {isLoading ? 'Searching...' : 'Search'}
             </Button>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              placeholder="City"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
+            <Input
+              placeholder="State"
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+            />
+            <Select value={minRating} onValueChange={setMinRating}>
+              <SelectTrigger>
+                <SelectValue placeholder="Min Rating" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Any Rating</SelectItem>
+                <SelectItem value="4">4+ Stars</SelectItem>
+                <SelectItem value="3">3+ Stars</SelectItem>
+                <SelectItem value="2">2+ Stars</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {!isLoading && !error && pagination.total > 0 && (
+            <div className="text-center text-sm text-gray-600">
+              Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
+              {Math.min(pagination.page * pagination.limit, pagination.total)}{' '}
+              of {pagination.total} doctors
+            </div>
+          )}
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {isLoading &&
@@ -148,16 +273,63 @@ export default function DoctorsPage() {
 
             {!isLoading &&
               !error &&
-              (filteredDoctors.length === 0 ? (
+              (doctors.length === 0 ? (
                 <div className="col-span-full text-center py-12">
                   <p className="text-gray-500">No doctors found.</p>
                 </div>
               ) : (
-                filteredDoctors.map((doctor) => (
+                doctors.map((doctor) => (
                   <DoctorCard key={doctor.id} doctor={doctor} />
                 ))
               ))}
           </div>
+
+          {!isLoading && !error && pagination.totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={!pagination.hasPrev}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+
+              <div className="flex space-x-1">
+                {Array.from(
+                  { length: Math.min(5, pagination.totalPages) },
+                  (_, i) => {
+                    const pageNum = Math.max(1, pagination.page - 2) + i;
+                    if (pageNum > pagination.totalPages) return null;
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={
+                          pageNum === pagination.page ? 'default' : 'outline'
+                        }
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={!pagination.hasNext}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
