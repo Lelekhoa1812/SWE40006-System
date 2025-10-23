@@ -269,14 +269,28 @@ server.post('/api/v1/auth/register', async (request, reply) => {
           firstName: '',
           lastName: '',
         },
-        medicalLicense: medicalLicense || `MD${Date.now()}`, // Generate unique license if not provided
+        isActive: true,
+        medicalLicense: medicalLicense || `MD${Date.now()}`,
         specialties: specialties || ['general_medicine'],
         rating: 0,
         reviewCount: 0,
+        location: {
+          city: '',
+          state: '',
+          country: 'USA',
+        },
+        bio: '',
+        consultationFee: 0,
         languages: ['English'],
-        isActive: true,
-        emailVerified: false,
-        userId: new mongoose.Types.ObjectId(), // Generate unique userId to avoid null conflict
+        availability: {
+          monday: [],
+          tuesday: [],
+          wednesday: [],
+          thursday: [],
+          friday: [],
+          saturday: [],
+          sunday: [],
+        },
       });
 
       request.log.info('Doctor object created, attempting to save...');
@@ -1271,4 +1285,5 @@ const start = async () => {
 start();
 // Force restart - Fri Oct 24 04:31:15 AEDT 2025
 // Force restart for doctor registration fix - Fri Oct 24 05:15:42 AEDT 2025
-// Force restart for doctor registration fix v2 - Fri Oct 24 09:04:37 AEDT 2025
+// Force restart - Fri Oct 24 09:09:54 AEDT 2025
+console.log('Server restarted at:', new Date());
