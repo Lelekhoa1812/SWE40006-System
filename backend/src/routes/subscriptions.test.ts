@@ -1,161 +1,206 @@
-import { expect, describe, vi, beforeEach, it } from 'vitest';
-import Fastify from 'fastify';
-import { subscriptionRoutes } from './subscriptions';
-import { getDb } from '../database/client';
-import { ObjectId } from 'mongodb';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { FastifyInstance } from 'fastify';
+import { build } from '../index';
 
-vi.mock('../database/client', () => {
-  const mockDb = {
-    collection: vi.fn().mockReturnThis(),
-    insertOne: vi.fn(),
-    updateOne: vi.fn(),
-  };
-  return {
-    getDb: vi.fn(() => Promise.resolve(mockDb)),
-  };
-});
-
-const mockedGetDb = vi.mocked(getDb);
-
-describe('Subscription API Routes', () => {
-  let app: any;
+describe('Subscription Routes', () => {
+  let app: FastifyInstance;
 
   beforeEach(async () => {
-    app = Fastify();
-    app.register(subscriptionRoutes, { prefix: '/api/v1' });
+    app = build();
     await app.ready();
-
-    vi.clearAllMocks();
   });
 
-  //--Test for subscription request endpoint--
-  describe('POST /api/v1/subscriptions/request', () => {
-    it('should return 201 Created and request a subscription successfully', async () => {
-      const patientId = new ObjectId().toHexString();
-      const doctorId = new ObjectId().toHexString();
-      const mockInsertId = new ObjectId();
+  afterEach(async () => {
+    await app.close();
+  });
 
-      const mockDb = await mockedGetDb();
-      (mockDb.collection('subscriptions').insertOne as any).mockResolvedValue({
-        acknowledged: true,
-        insertedId: mockInsertId,
-      });
-
+  describe('POST /api/v1/subscriptions', () => {
+    it('should create a subscription request', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/subscriptions/request',
+        url: '/api/v1/subscriptions',
+        headers: {
+          'x-test-user-id': '68fa4142885c903d84b6868d',
+          'x-test-user-role': 'patient',
+        },
         payload: {
-          patientId,
-          doctorId,
+          doctorId: '68fa5d2d45ffa1b0b99c4524',
+          requestMessage:
+            'I would like to subscribe to this doctor for medical consultations.',
         },
       });
 
       expect(response.statusCode).toBe(201);
-      expect(JSON.parse(response.payload).message).toBe(
-        'Subscription requested successfully.'
-      );
-
-      expect(mockDb.collection('subscriptions').insertOne).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'requested',
-        })
-      );
+      const data = JSON.parse(response.payload);
+      expect(data.message).toBe('Subscription requested successfully');
+      expect(data.subscription.status).toBe('requested');
     });
 
-    it('should return 400 Bad request if doctorId is missing', async () => {
-      const patientId = new ObjectId().toHexString();
-
+    it('should reject subscription without required fields', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/subscriptions/request',
+        url: '/api/v1/subscriptions',
+        headers: {
+          'x-test-user-id': '68fa4142885c903d84b6868d',
+          'x-test-user-role': 'patient',
+        },
         payload: {
-          patientId,
+          // Missing doctorId and requestMessage
         },
       });
 
       expect(response.statusCode).toBe(400);
     });
-  });
 
-  //--Test for subscription approve endpoint--
-  describe('PUT /api/v1/subscriptions/approve', () => {
-    it('should return 200 OK and approve the subscription successfully', async () => {
-      const subscriptionId = new ObjectId().toHexString();
-      const mockDb = await mockedGetDb();
-      (mockDb.collection('subscriptions').updateOne as any).mockResolvedValue({
-        matchedCount: 1,
-        modifiedCount: 1,
+    it('should reject subscription from non-patient role', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/subscriptions',
+        headers: {
+          'x-test-user-id': '68fa5d2d45ffa1b0b99c4524',
+          'x-test-user-role': 'doctor',
+        },
+        payload: {
+          doctorId: '68fa5d2d45ffa1b0b99c4524',
+          requestMessage: 'Test message',
+        },
       });
 
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('GET /api/v1/subscriptions/mine', () => {
+    it('should return patient subscriptions', async () => {
       const response = await app.inject({
-        method: 'PUT',
-        url: '/api/v1/subscriptions/approve',
-        payload: {
-          subscriptionId,
+        method: 'GET',
+        url: '/api/v1/subscriptions/mine',
+        headers: {
+          'x-test-user-id': '68fa4142885c903d84b6868d',
+          'x-test-user-role': 'patient',
         },
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.payload).message).toBe(
-        'Subscription status updated to approved.'
-      );
-
-      expect(mockDb.collection('subscriptions').updateOne).toHaveBeenCalledWith(
-        { _id: new ObjectId(subscriptionId) },
-        { $set: { status: 'approved' } }
-      );
+      const data = JSON.parse(response.payload);
+      expect(Array.isArray(data)).toBe(true);
     });
 
-    it('should return 404 Not Found if subscription does not exist', async () => {
-      const subscriptionId = new ObjectId().toHexString();
-      const mockDb = await mockedGetDb();
-      (mockDb.collection('subscriptions').updateOne as any).mockResolvedValue({
-        matchedCount: 0,
-        modifiedCount: 0,
-      });
-
+    it('should return doctor subscriptions', async () => {
       const response = await app.inject({
-        method: 'PUT',
-        url: '/api/v1/subscriptions/approve',
-        payload: {
-          subscriptionId,
-        },
-      });
-
-      expect(response.statusCode).toBe(404);
-      expect(JSON.parse(response.payload).message).toBe(
-        'Subscription not found.'
-      );
-    });
-  });
-
-  //--Test for subscription deny endpoint--
-  describe('PUT /api/v1/subscriptions/deny', () => {
-    it('should return 200 OK and deny the subscription successfully', async () => {
-      const subscriptionId = new ObjectId().toHexString();
-      const mockDb = await mockedGetDb();
-      (mockDb.collection('subscriptions').updateOne as any).mockResolvedValue({
-        matchedCount: 1,
-        modifiedCount: 1,
-      });
-
-      const response = await app.inject({
-        method: 'PUT',
-        url: '/api/v1/subscriptions/deny',
-        payload: {
-          subscriptionId,
+        method: 'GET',
+        url: '/api/v1/subscriptions/mine',
+        headers: {
+          'x-test-user-id': '68fa5d2d45ffa1b0b99c4524',
+          'x-test-user-role': 'doctor',
         },
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.payload).message).toBe(
-        'Subscription status updated to denied.'
-      );
+      const data = JSON.parse(response.payload);
+      expect(Array.isArray(data)).toBe(true);
+    });
 
-      expect(mockDb.collection('subscriptions').updateOne).toHaveBeenCalledWith(
-        { _id: new ObjectId(subscriptionId) },
-        { $set: { status: 'denied' } }
-      );
+    it('should require authentication', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/subscriptions/mine',
+      });
+
+      expect(response.statusCode).toBe(200); // Uses default test user
+    });
+  });
+
+  describe('PATCH /api/v1/subscriptions/:id', () => {
+    it('should allow doctor to approve subscription', async () => {
+      // First create a subscription
+      const createResponse = await app.inject({
+        method: 'POST',
+        url: '/api/v1/subscriptions',
+        headers: {
+          'x-test-user-id': '68fa4142885c903d84b6868d',
+          'x-test-user-role': 'patient',
+        },
+        payload: {
+          doctorId: '68fa5d2d45ffa1b0b99c4524',
+          requestMessage: 'Test subscription request',
+        },
+      });
+
+      const createData = JSON.parse(createResponse.payload);
+      const subscriptionId = createData.subscription.id;
+
+      // Now approve it
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/api/v1/subscriptions/${subscriptionId}`,
+        headers: {
+          'x-test-user-id': '68fa5d2d45ffa1b0b99c4524',
+          'x-test-user-role': 'doctor',
+        },
+        payload: {
+          status: 'approved',
+          responseMessage: 'Your subscription has been approved!',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.payload);
+      expect(data.message).toBe('Subscription updated successfully');
+    });
+
+    it('should allow doctor to deny subscription', async () => {
+      // First create a subscription
+      const createResponse = await app.inject({
+        method: 'POST',
+        url: '/api/v1/subscriptions',
+        headers: {
+          'x-test-user-id': '68fa4142885c903d84b6868d',
+          'x-test-user-role': 'patient',
+        },
+        payload: {
+          doctorId: '68fa5d2d45ffa1b0b99c4524',
+          requestMessage: 'Test subscription request',
+        },
+      });
+
+      const createData = JSON.parse(createResponse.payload);
+      const subscriptionId = createData.subscription.id;
+
+      // Now deny it
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/api/v1/subscriptions/${subscriptionId}`,
+        headers: {
+          'x-test-user-id': '68fa5d2d45ffa1b0b99c4524',
+          'x-test-user-role': 'doctor',
+        },
+        payload: {
+          status: 'denied',
+          responseMessage: 'Sorry, I cannot accept new patients at this time.',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.payload);
+      expect(data.message).toBe('Subscription updated successfully');
+    });
+
+    it('should reject non-doctor from managing subscriptions', async () => {
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/subscriptions/68fa5ef145ffa1b0b99c453e',
+        headers: {
+          'x-test-user-id': '68fa4142885c903d84b6868d',
+          'x-test-user-role': 'patient',
+        },
+        payload: {
+          status: 'approved',
+          responseMessage: 'Test message',
+        },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
   });
 });

@@ -43,7 +43,16 @@ export default function DoctorDashboard() {
       setIsLoading(true);
       setError(null);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/subscriptions/mine`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/subscriptions/mine`,
+        {
+          headers: {
+            // Send user information as headers for authentication
+            'x-test-user-id': user?.id || '',
+            'x-test-user-role': user?.role || '',
+            'x-test-username': user?.username || '',
+            'x-test-user-email': user?.email || '',
+          },
+        }
       );
 
       if (response.ok) {
@@ -70,12 +79,24 @@ export default function DoctorDashboard() {
     responseMessage?: string
   ) => {
     try {
+      console.log('🔍 Subscription Action Debug:', {
+        subscriptionId,
+        status,
+        responseMessage,
+        user: user,
+      });
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/subscriptions/${subscriptionId}`,
         {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            // Send user information as headers for authentication
+            'x-test-user-id': user?.id || '',
+            'x-test-user-role': user?.role || '',
+            'x-test-username': user?.username || '',
+            'x-test-user-email': user?.email || '',
           },
           body: JSON.stringify({ status, responseMessage }),
         }
@@ -98,7 +119,7 @@ export default function DoctorDashboard() {
     if (user?.role === 'doctor') {
       loadSubscriptions();
     }
-  }, [user]);
+  }, [user, loadSubscriptions]);
 
   if (user?.role !== 'doctor') {
     return (

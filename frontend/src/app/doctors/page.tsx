@@ -102,7 +102,7 @@ const MessageCircle = ({ className }: { className?: string }) => (
 );
 
 interface Doctor {
-  id: string;
+  _id: string;
   email: string;
   profile: {
     firstName: string;
@@ -123,9 +123,15 @@ interface Doctor {
 function DoctorCard({
   doctor,
   onSubscribe,
+  userSubscriptions = [],
 }: {
   doctor: Doctor;
   onSubscribe: (doctorId: string, doctorName: string) => void;
+  userSubscriptions?: Array<{
+    _id: string;
+    doctorId?: { _id: string };
+    status: string;
+  }>;
 }) {
   const fullName = `${doctor.profile.firstName} ${doctor.profile.lastName}`;
   const location = doctor.location
@@ -134,16 +140,32 @@ function DoctorCard({
 
   const handleSubscribe = () => {
     console.log('🔍 Doctor object:', doctor);
-    console.log('🔍 Doctor ID:', doctor._id || doctor.id);
-    onSubscribe(doctor._id || doctor.id, fullName);
+    console.log('🔍 Doctor ID:', doctor._id);
+    onSubscribe(doctor._id, fullName);
   };
 
   const handleChat = () => {
-    // For now, just show an alert - in a real app, this would open a chat interface
-    alert(
-      `Chat with ${fullName} - This would open a chat interface for approved subscriptions`
+    // Find approved subscription for this doctor
+    const approvedSubscription = userSubscriptions.find(
+      (sub) => sub.doctorId?._id === doctor._id && sub.status === 'approved'
     );
+
+    if (approvedSubscription) {
+      window.location.href = `/chat/${approvedSubscription._id}`;
+    } else {
+      alert('You need an approved subscription to chat with this doctor.');
+    }
   };
+
+  // Check if user has already subscribed to this doctor
+  const hasSubscribed = userSubscriptions.some(
+    (sub) => sub.doctorId?._id === doctor._id
+  );
+
+  // Check if subscription is approved
+  const isApproved = userSubscriptions.some(
+    (sub) => sub.doctorId?._id === doctor._id && sub.status === 'approved'
+  );
 
   return (
     <Card className="h-full flex flex-col">
@@ -202,17 +224,28 @@ function DoctorCard({
         </div>
 
         <div className="mt-4 pt-4 border-t space-y-2">
-          <Button onClick={handleSubscribe} className="w-full" size="sm">
-            Subscribe
-          </Button>
+          {hasSubscribed ? (
+            <Button
+              disabled
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              size="sm"
+            >
+              {isApproved ? 'Subscribed' : 'Subscription Pending'}
+            </Button>
+          ) : (
+            <Button onClick={handleSubscribe} className="w-full" size="sm">
+              Subscribe
+            </Button>
+          )}
           <Button
             onClick={handleChat}
             variant="outline"
             className="w-full"
             size="sm"
+            disabled={!isApproved}
           >
             <MessageCircle className="h-4 w-4 mr-2" />
-            Chat
+            {isApproved ? 'Chat' : 'Chat (Approval Required)'}
           </Button>
         </div>
       </CardContent>
@@ -226,6 +259,13 @@ export default function DoctorsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [userSubscriptions, setUserSubscriptions] = useState<
+    Array<{
+      _id: string;
+      doctorId?: { _id: string };
+      status: string;
+    }>
+  >([]);
   const [subscriptionModal, setSubscriptionModal] = useState<{
     isOpen: boolean;
     doctorId: string;
@@ -268,9 +308,32 @@ export default function DoctorsPage() {
     }
   }, []);
 
+  const loadUserSubscriptions = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/subscriptions/mine`,
+        {
+          headers: {
+            'x-test-user-id': user.id,
+            'x-test-user-role': user.role,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setUserSubscriptions(data || []);
+      }
+    } catch (err) {
+      console.error('Failed to load subscriptions:', err);
+    }
+  }, [user]);
+
   useEffect(() => {
     loadDoctors();
-  }, [loadDoctors]);
+    loadUserSubscriptions();
+  }, [loadDoctors, loadUserSubscriptions]);
 
   // Show loading state while auth is being checked
   if (loading) {
@@ -351,6 +414,8 @@ export default function DoctorsPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-test-user-id': user?.id || '68fa4142885c903d84b6868d',
+            'x-test-user-role': user?.role || 'patient',
           },
           body: JSON.stringify(requestData),
         }
@@ -457,9 +522,10 @@ export default function DoctorsPage() {
               ) : (
                 doctors.map((doctor) => (
                   <DoctorCard
-                    key={doctor.id}
+                    key={doctor._id}
                     doctor={doctor}
                     onSubscribe={handleSubscribe}
+                    userSubscriptions={userSubscriptions}
                   />
                 ))
               ))}
