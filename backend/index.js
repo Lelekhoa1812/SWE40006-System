@@ -235,9 +235,13 @@ server.post('/api/v1/auth/register', async (request, reply) => {
       specialties,
     } = request.body;
 
-    // Check if user already exists
+    // Check if user already exists in both User and Doctor models
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
+    const existingDoctor = await Doctor.findOne({
+      $or: [{ email }, { username }],
+    });
+
+    if (existingUser || existingDoctor) {
       return reply.code(400).send({ error: 'User already exists' });
     }
 
@@ -1267,3 +1271,4 @@ const start = async () => {
 start();
 // Force restart - Fri Oct 24 04:31:15 AEDT 2025
 // Force restart for doctor registration fix - Fri Oct 24 05:15:42 AEDT 2025
+// Force restart for doctor registration fix v2 - Fri Oct 24 09:04:37 AEDT 2025
