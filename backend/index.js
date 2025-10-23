@@ -291,6 +291,7 @@ server.post('/api/v1/auth/register', async (request, reply) => {
           saturday: [],
           sunday: [],
         },
+        // Let MongoDB automatically generate the _id - no custom userId needed
       });
 
       request.log.info('Doctor object created, attempting to save...');
