@@ -808,12 +808,46 @@ server.get('/api/v1/chat/messages/:subscriptionId', async (request, reply) => {
 
     // Get messages
     const messages = await Message.find({ subscriptionId })
-      .populate('fromUserId', 'profile.firstName profile.lastName')
-      .populate('toUserId', 'profile.firstName profile.lastName')
       .sort({ createdAt: 1 })
       .limit(50);
 
-    return reply.send(messages);
+    // Populate user details for each message
+    const populatedMessages = await Promise.all(
+      messages.map(async (message) => {
+        let fromUser = null;
+        let toUser = null;
+
+        // Try to find fromUser in both User and Doctor models
+        fromUser = await User.findById(message.fromUserId);
+        if (!fromUser) {
+          fromUser = await Doctor.findById(message.fromUserId);
+        }
+
+        // Try to find toUser in both User and Doctor models
+        toUser = await User.findById(message.toUserId);
+        if (!toUser) {
+          toUser = await Doctor.findById(message.toUserId);
+        }
+
+        return {
+          ...message.toObject(),
+          fromUserId: fromUser
+            ? {
+                _id: fromUser._id,
+                profile: fromUser.profile,
+              }
+            : null,
+          toUserId: toUser
+            ? {
+                _id: toUser._id,
+                profile: toUser.profile,
+              }
+            : null,
+        };
+      })
+    );
+
+    return reply.send(populatedMessages);
   } catch (error) {
     request.log.error(error);
     return reply.code(500).send({ error: 'Internal server error' });
