@@ -15,7 +15,11 @@ interface Message {
 
 interface SocketContextType {
   messages: Message[];
-  sendMessage: (subscriptionId: string, content: string, messageType?: string) => Promise<void>;
+  sendMessage: (
+    subscriptionId: string,
+    content: string,
+    messageType?: string
+  ) => Promise<void>;
   joinRoom: (subscriptionId: string) => void;
   leaveRoom: (subscriptionId: string) => void;
   connected: boolean;
@@ -24,10 +28,14 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [connected, setConnected] = useState(false);
+  const [messages] = useState<Message[]>([]);
+  const [connected] = useState(false);
 
-  const sendMessage = async (subscriptionId: string, content: string, messageType = 'text') => {
+  const sendMessage = async (
+    subscriptionId: string,
+    content: string,
+    messageType = 'text'
+  ) => {
     // Mock message sending
     console.log('Send message:', subscriptionId, content, messageType);
   };
@@ -43,13 +51,15 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <SocketContext.Provider value={{ 
-      messages, 
-      sendMessage, 
-      joinRoom, 
-      leaveRoom, 
-      connected 
-    }}>
+    <SocketContext.Provider
+      value={{
+        messages,
+        sendMessage,
+        joinRoom,
+        leaveRoom,
+        connected,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );

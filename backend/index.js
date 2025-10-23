@@ -102,9 +102,21 @@ const DoctorSchema = new mongoose.Schema({
 });
 
 const SubscriptionSchema = new mongoose.Schema({
-  patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor', required: true },
-  status: { type: String, enum: ['requested', 'approved', 'denied', 'cancelled'], default: 'requested' },
+  patientId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  doctorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Doctor',
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ['requested', 'approved', 'denied', 'cancelled'],
+    default: 'requested',
+  },
   requestMessage: String,
   responseMessage: String,
   requestedAt: { type: Date, default: Date.now },
@@ -118,12 +130,32 @@ const SubscriptionSchema = new mongoose.Schema({
 });
 
 const MessageSchema = new mongoose.Schema({
-  subscriptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subscription', required: true },
-  fromUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  toUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  subscriptionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subscription',
+    required: true,
+  },
+  fromUserId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  toUserId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
   content: { type: String, required: true },
-  messageType: { type: String, enum: ['text', 'image', 'file'], default: 'text' },
-  status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
+  messageType: {
+    type: String,
+    enum: ['text', 'image', 'file'],
+    default: 'text',
+  },
+  status: {
+    type: String,
+    enum: ['sent', 'delivered', 'read'],
+    default: 'sent',
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -145,21 +177,21 @@ const Message = mongoose.model('Message', MessageSchema);
 const AuditLog = mongoose.model('AuditLog', AuditLogSchema);
 
 // Health check routes
-server.get('/health', async (request, reply) => {
+server.get('/health', async () => {
   return {
     status: 'ok',
     service: 'backend',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
   };
 });
 
-server.get('/api/v1/health', async (request, reply) => {
+server.get('/api/v1/health', async () => {
   return {
     status: 'ok',
     service: 'backend',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
   };
 });
 
@@ -198,7 +230,7 @@ server.post('/api/v1/auth/register', async (request, reply) => {
 
     return reply.code(201).send({
       message: 'User created successfully',
-      user: { id: user._id, username, email, role }
+      user: { id: user._id, username, email, role },
     });
   } catch (error) {
     request.log.error(error);
@@ -232,7 +264,12 @@ server.post('/api/v1/auth/login', async (request, reply) => {
 
     return reply.send({
       message: 'Login successful',
-      user: { id: user._id, username: user.username, email: user.email, role: user.role }
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     request.log.error(error);
@@ -244,7 +281,12 @@ server.get('/api/v1/auth/me', async (request, reply) => {
   try {
     // This would normally check session/token, for now return mock
     return reply.send({
-      user: { id: 'mock-user-id', username: 'testuser', email: 'test@test.com', role: 'patient' }
+      user: {
+        id: 'mock-user-id',
+        username: 'testuser',
+        email: 'test@test.com',
+        role: 'patient',
+      },
     });
   } catch (error) {
     request.log.error(error);
@@ -264,7 +306,7 @@ server.get('/api/v1/doctors', async (request, reply) => {
       query.$or = [
         { 'profile.firstName': { $regex: q, $options: 'i' } },
         { 'profile.lastName': { $regex: q, $options: 'i' } },
-        { specialties: { $regex: q, $options: 'i' } }
+        { specialties: { $regex: q, $options: 'i' } },
       ];
     }
 
@@ -277,7 +319,9 @@ server.get('/api/v1/doctors', async (request, reply) => {
 
     // Get paginated results
     const doctors = await Doctor.find(query)
-      .select('profile specialties rating reviewCount location phone bio consultationFee languages medicalLicense')
+      .select(
+        'profile specialties rating reviewCount location phone bio consultationFee languages medicalLicense'
+      )
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
       .lean();
@@ -287,7 +331,7 @@ server.get('/api/v1/doctors', async (request, reply) => {
       total,
       page: parseInt(page),
       limit: parseInt(limit),
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
     request.log.error(error);
@@ -320,7 +364,7 @@ server.post('/api/v1/subscriptions', async (request, reply) => {
 
     return reply.code(201).send({
       message: 'Subscription requested successfully',
-      subscription: { id: subscription._id, status: subscription.status }
+      subscription: { id: subscription._id, status: subscription.status },
     });
   } catch (error) {
     request.log.error(error);
@@ -333,11 +377,11 @@ server.get('/api/v1/subscriptions/mine', async (request, reply) => {
     const userId = '68fa4142885c903d84b6868d'; // Test user ID
 
     const subscriptions = await Subscription.find({
-      $or: [{ patientId: userId }, { doctorId: userId }]
+      $or: [{ patientId: userId }, { doctorId: userId }],
     })
-    .populate('patientId', 'username email')
-    .populate('doctorId', 'profile specialties')
-    .lean();
+      .populate('patientId', 'username email')
+      .populate('doctorId', 'profile specialties')
+      .lean();
 
     return reply.send({ subscriptions });
   } catch (error) {
@@ -368,12 +412,12 @@ server.patch('/api/v1/subscriptions/:id', async (request, reply) => {
       target: id,
       details: { status, responseMessage },
       ip: request.ip,
-      userAgent: request.headers['user-agent']
+      userAgent: request.headers['user-agent'],
     });
 
     return reply.send({
       message: 'Subscription updated successfully',
-      subscription
+      subscription,
     });
   } catch (error) {
     request.log.error(error);
@@ -427,7 +471,7 @@ server.post('/api/v1/messages', async (request, reply) => {
 
     return reply.code(201).send({
       message: 'Message sent successfully',
-      messageId: message._id
+      messageId: message._id,
     });
   } catch (error) {
     request.log.error(error);
@@ -477,7 +521,6 @@ const start = async () => {
     const port = process.env.PORT || 8080;
     await server.listen({ port, host: '0.0.0.0' });
     server.log.info(`Server listening on port ${port}`);
-
   } catch (err) {
     server.log.error(err);
     process.exit(1);

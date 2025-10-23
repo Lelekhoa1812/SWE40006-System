@@ -53,38 +53,48 @@ server.register(cors, {
 });
 
 // Health check route
-server.get('/health', async (request, reply) => {
+server.get('/health', async () => {
   return {
     status: 'ok',
     service: 'backend',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
   };
 });
 
 // API health check route
-server.get('/api/v1/health', async (request, reply) => {
+server.get('/api/v1/health', async () => {
   return {
     status: 'ok',
     service: 'backend',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
   };
 });
 
 // Doctors endpoint with real database data
 server.get('/api/v1/doctors', async (request, reply) => {
   try {
-    const { page = 1, limit = 12, q = '', specialty = '' } = request.query as any;
+    const {
+      page = 1,
+      limit = 12,
+      q = '',
+      specialty = '',
+    } = request.query as {
+      page?: string;
+      limit?: string;
+      q?: string;
+      specialty?: string;
+    };
 
     // Build query
-    const query: any = {};
+    const query: Record<string, unknown> = {};
 
     if (q) {
       query.$or = [
         { 'profile.firstName': { $regex: q, $options: 'i' } },
         { 'profile.lastName': { $regex: q, $options: 'i' } },
-        { specialties: { $regex: q, $options: 'i' } }
+        { specialties: { $regex: q, $options: 'i' } },
       ];
     }
 
@@ -97,7 +107,9 @@ server.get('/api/v1/doctors', async (request, reply) => {
 
     // Get paginated results
     const doctors = await Doctor.find(query)
-      .select('profile specialties rating reviewCount location phone bio consultationFee languages medicalLicense')
+      .select(
+        'profile specialties rating reviewCount location phone bio consultationFee languages medicalLicense'
+      )
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
       .lean();
@@ -107,7 +119,7 @@ server.get('/api/v1/doctors', async (request, reply) => {
       total,
       page: parseInt(page),
       limit: parseInt(limit),
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
     request.log.error(error);
@@ -123,7 +135,6 @@ const start = async (): Promise<void> => {
     const port = env.PORT;
     await server.listen({ port, host: '0.0.0.0' });
     server.log.info(`Server listening on port ${port}`);
-
   } catch (err) {
     server.log.error(err);
     process.exit(1);

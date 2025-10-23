@@ -1,16 +1,74 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select } from '@/components/ui/select';
+
+// Simple SVG icons
+const Search = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+    />
+  </svg>
+);
+
+const Filter = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+    />
+  </svg>
+);
+
+const ChevronLeft = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15 19l-7-7 7-7"
+    />
+  </svg>
+);
+
+const ChevronRight = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 5l7 7-7 7"
+    />
+  </svg>
+);
 import { fetchJson } from '@/lib/api';
 import { DoctorCard } from '@/components/doctor-card';
 import { DoctorCardSkeleton } from '@/components/doctor-card-skeleton';
@@ -196,26 +254,24 @@ export default function DoctorsPage() {
                 />
               </div>
             </div>
-            <Select
-              value={selectedSpecialty}
-              onValueChange={setSelectedSpecialty}
-            >
-              <SelectTrigger>
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Specialty" />
-              </SelectTrigger>
-              <SelectContent>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Select
+                value={selectedSpecialty}
+                onChange={(e) => setSelectedSpecialty(e.target.value)}
+                className="pl-10"
+              >
                 {specialties.map((specialty) => (
-                  <SelectItem key={specialty} value={specialty}>
+                  <option key={specialty} value={specialty}>
                     {specialty === 'All Specialties'
                       ? 'All Specialties'
                       : specialty
                           .replace('_', ' ')
                           .replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </SelectItem>
+                  </option>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </div>
             <Button onClick={handleSearch} disabled={isLoading}>
               {isLoading ? 'Searching...' : 'Search'}
             </Button>
@@ -232,16 +288,14 @@ export default function DoctorsPage() {
               value={state}
               onChange={(e) => setState(e.target.value)}
             />
-            <Select value={minRating} onValueChange={setMinRating}>
-              <SelectTrigger>
-                <SelectValue placeholder="Min Rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Any Rating</SelectItem>
-                <SelectItem value="4">4+ Stars</SelectItem>
-                <SelectItem value="3">3+ Stars</SelectItem>
-                <SelectItem value="2">2+ Stars</SelectItem>
-              </SelectContent>
+            <Select
+              value={minRating}
+              onChange={(e) => setMinRating(e.target.value)}
+            >
+              <option value="0">Any Rating</option>
+              <option value="4">4+ Stars</option>
+              <option value="3">3+ Stars</option>
+              <option value="2">2+ Stars</option>
             </Select>
           </div>
 

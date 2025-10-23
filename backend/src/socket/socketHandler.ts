@@ -1,12 +1,15 @@
 import { Server as SocketIOServer } from 'socket.io';
-import fastify, { FastifyInstance } from 'fastify';
+// import fastify, { FastifyInstance } from 'fastify';
 import { Message } from '../database/models/Message';
 import { Subscription } from '../database/models/Subscription';
 
-export async function setupSocketIO(fastify: FastifyInstance) {
+export async function setupSocketIO(fastify: any) {
   const io = new SocketIOServer(fastify.server as any, {
     cors: {
-      origin: ['https://medmsg-frontend.azurewebsites.net', 'http://localhost:3000'],
+      origin: [
+        'https://medmsg-frontend.azurewebsites.net',
+        'http://localhost:3000',
+      ],
       credentials: true,
     },
   });
@@ -16,7 +19,7 @@ export async function setupSocketIO(fastify: FastifyInstance) {
       // Get session from cookie
       const sessionId = socket.handshake.headers.cookie
         ?.split(';')
-        .find(c => c.trim().startsWith('sessionId='))
+        .find((c) => c.trim().startsWith('sessionId='))
         ?.split('=')[1];
 
       if (!sessionId) {
@@ -76,9 +79,10 @@ export async function setupSocketIO(fastify: FastifyInstance) {
         const message = new Message({
           subscriptionId,
           fromUserId: data.userId,
-          toUserId: subscription.patientId.toString() === data.userId
-            ? subscription.doctorId
-            : subscription.patientId,
+          toUserId:
+            subscription.patientId.toString() === data.userId
+              ? subscription.doctorId
+              : subscription.patientId,
           content,
           messageType,
           status: 'sent',
