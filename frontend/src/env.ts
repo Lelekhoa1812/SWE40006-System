@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Hardcode the API URL for now to ensure it's properly embedded
-const apiBaseUrl = 'https://medmsg-blue.azurewebsites.net';
+const apiBaseUrl = 'https://medmsg-railway-production.up.railway.app';
 
 const EnvSchema = z.object({
   NEXT_PUBLIC_API_BASE_URL: z

@@ -5,7 +5,11 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/frontend.tsbuildinfo",
     "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "es6"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es6"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -24,18 +28,32 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/lib/*": ["./src/lib/*"],
-      "@/app/*": ["./src/app/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/lib/*": [
+        "./src/lib/*"
+      ],
+      "@/app/*": [
+        "./src/app/*"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "src/**/*"],
+  "include": [
+    "next-env.d.ts",
+    "src/**/*",
+    ".next/types/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/__tests__/**/*"
   ],
-  "types": ["vitest/globals"]
+  "types": [
+    "vitest/globals"
+  ]
 }

@@ -55,7 +55,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
         const subscription = new Subscription({
           patientId: userId,
           doctorId: body.doctorId,
-          status: 'requested',
+        status: 'requested',
           requestedAt: new Date(),
         });
 
@@ -89,7 +89,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
             doctorId: body.doctorId,
           },
         });
-      } catch (error) {
+    } catch (error) {
         if (error instanceof z.ZodError) {
           return reply.code(400).send({
             error: 'Validation error',
@@ -155,8 +155,8 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
           });
       } catch (err) {
         if (err instanceof z.ZodError) {
-          return reply
-            .code(400)
+        return reply
+          .code(400)
             .send({ error: 'Bad request', details: err.errors });
         }
         return reply.code(500).send({ error: 'Internal server error' });

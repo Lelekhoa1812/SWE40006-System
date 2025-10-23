@@ -1,19 +1,10 @@
-import Fastify from 'fastify';
+import fastify from 'fastify';
 import cors from '@fastify/cors';
-import session from '@fastify/session';
-import MongoStore from 'connect-mongo';
-import { healthRoutes } from './routes/health';
-import { doctorRoutes } from './routes/doctors';
-import { subscriptionRoutes } from './routes/subscriptions';
-import { messageRoutes } from './routes/messages';
-import { authRoutes } from './routes/auth';
-import { adminRoutes } from './routes/admin';
 import { env } from './env';
 import { connectDatabase } from './database/connection';
-import { setupSocketIO } from './socket/socketHandler';
-import { startRetentionJob } from './jobs/retention';
+import { Doctor } from './database/models/Doctor';
 
-const fastify = Fastify({
+const server = fastify({
   logger: {
     level: env.LOG_LEVEL,
     transport: {
@@ -28,7 +19,7 @@ const fastify = Fastify({
 });
 
 // Add request logging
-fastify.addHook('onRequest', async (request) => {
+server.addHook('onRequest', async (request) => {
   request.log.info(
     {
       method: request.method,
@@ -40,7 +31,7 @@ fastify.addHook('onRequest', async (request) => {
   );
 });
 
-fastify.addHook('onResponse', async (request, reply) => {
+server.addHook('onResponse', async (request, reply) => {
   request.log.info(
     {
       method: request.method,
@@ -53,7 +44,7 @@ fastify.addHook('onResponse', async (request, reply) => {
 });
 
 // Register CORS
-fastify.register(cors, {
+server.register(cors, {
   origin: [
     'http://localhost:3000',
     'https://medmsg-frontend.azurewebsites.net',
@@ -61,27 +52,68 @@ fastify.register(cors, {
   credentials: true,
 });
 
-// Register session
-fastify.register(session, {
-  secret: env.SESSION_SECRET,
-  cookie: {
-    secure: env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
-  store: MongoStore.create({
-    mongoUrl: env.MONGODB_URI,
-  }) as any,
+// Health check route
+server.get('/health', async (request, reply) => {
+  return {
+    status: 'ok',
+    service: 'backend',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  };
 });
 
-// Register routes
-fastify.register(healthRoutes, { prefix: '' });
-fastify.register(authRoutes, { prefix: '/api/v1/auth' });
-fastify.register(doctorRoutes, { prefix: '/api/v1' });
-fastify.register(subscriptionRoutes, { prefix: '/api/v1' });
-fastify.register(messageRoutes, { prefix: '/api/v1' });
-fastify.register(adminRoutes, { prefix: '/api/v1' });
+// API health check route
+server.get('/api/v1/health', async (request, reply) => {
+  return {
+    status: 'ok',
+    service: 'backend',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  };
+});
+
+// Doctors endpoint with real database data
+server.get('/api/v1/doctors', async (request, reply) => {
+  try {
+    const { page = 1, limit = 12, q = '', specialty = '' } = request.query as any;
+
+    // Build query
+    const query: any = {};
+
+    if (q) {
+      query.$or = [
+        { 'profile.firstName': { $regex: q, $options: 'i' } },
+        { 'profile.lastName': { $regex: q, $options: 'i' } },
+        { specialties: { $regex: q, $options: 'i' } }
+      ];
+    }
+
+    if (specialty) {
+      query.specialties = { $regex: specialty, $options: 'i' };
+    }
+
+    // Get total count
+    const total = await Doctor.countDocuments(query);
+
+    // Get paginated results
+    const doctors = await Doctor.find(query)
+      .select('profile specialties rating reviewCount location phone bio consultationFee languages medicalLicense')
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .lean();
+
+    return {
+      doctors,
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(total / limit)
+    };
+  } catch (error) {
+    request.log.error(error);
+    reply.code(500).send({ error: 'Internal server error' });
+  }
+});
 
 const start = async (): Promise<void> => {
   try {
@@ -89,17 +121,11 @@ const start = async (): Promise<void> => {
     await connectDatabase();
 
     const port = env.PORT;
-    await fastify.listen({ port, host: '0.0.0.0' });
-    fastify.log.info(`Server listening on port ${port}`);
+    await server.listen({ port, host: '0.0.0.0' });
+    server.log.info(`Server listening on port ${port}`);
 
-    // Setup Socket.IO after server is ready
-    setupSocketIO(fastify);
-    fastify.log.info('Socket.IO server initialized');
-
-    // Start retention job
-    startRetentionJob(fastify.log);
   } catch (err) {
-    fastify.log.error(err);
+    server.log.error(err);
     process.exit(1);
   }
 };

@@ -1,37 +1,54 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAuditLog extends Document {
-  id: string;
   action: string;
-  userId?: string;
-  resourceType?: string;
-  resourceId?: string;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
+  actor: {
+    userId?: mongoose.Types.ObjectId;
+    email?: string;
+    role?: string;
+  };
+  target: {
+    type: string;
+    id?: mongoose.Types.ObjectId;
+    name?: string;
+  };
+  details: Record<string, any>;
+  ipAddress?: string;
+  userAgent?: string;
+  timestamp: Date;
 }
 
-const AuditLogSchema = new Schema<IAuditLog>(
-  {
-    action: { type: String, required: true, index: true },
-    userId: { type: String, index: true },
-    resourceType: { type: String, index: true },
-    resourceId: { type: String, index: true },
-    metadata: { type: Schema.Types.Mixed },
+const AuditLogSchema = new Schema<IAuditLog>({
+  action: {
+    type: String,
+    required: true,
   },
-  {
-    timestamps: { createdAt: true, updatedAt: false },
-    toJSON: {
-      transform: function (doc, ret) {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
-    },
-  }
-);
+  actor: {
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
+    email: String,
+    role: String,
+  },
+  target: {
+    type: { type: String, required: true },
+    id: Schema.Types.ObjectId,
+    name: String,
+  },
+  details: {
+    type: Schema.Types.Mixed,
+    default: {},
+  },
+  ipAddress: String,
+  userAgent: String,
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
-AuditLogSchema.index({ action: 1, createdAt: -1 });
-AuditLogSchema.index({ userId: 1, createdAt: -1 });
+// Indexes
+AuditLogSchema.index({ action: 1 });
+AuditLogSchema.index({ 'actor.userId': 1 });
+AuditLogSchema.index({ timestamp: -1 });
+AuditLogSchema.index({ 'target.type': 1, 'target.id': 1 });
 
 export const AuditLog = mongoose.model<IAuditLog>('AuditLog', AuditLogSchema);

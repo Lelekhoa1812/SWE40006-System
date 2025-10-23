@@ -1,23 +1,36 @@
-import { FastifyRequest } from 'fastify';
 import { AuditLog } from '../database/models/AuditLog';
 
-export async function writeAudit(options: {
-  request?: FastifyRequest;
+export interface AuditData {
   action: string;
-  resourceType?: string;
-  resourceId?: string;
-  metadata?: Record<string, unknown>;
-}): Promise<void> {
+  actor: {
+    userId?: string;
+    email?: string;
+    role?: string;
+  };
+  target: {
+    type: string;
+    id?: string;
+    name?: string;
+  };
+  details: Record<string, any>;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export async function writeAudit(data: AuditData): Promise<void> {
   try {
-    const userId = options.request?.user?.id;
-    await AuditLog.create({
-      action: options.action,
-      userId,
-      resourceType: options.resourceType,
-      resourceId: options.resourceId,
-      metadata: options.metadata,
+    const auditLog = new AuditLog({
+      action: data.action,
+      actor: data.actor,
+      target: data.target,
+      details: data.details,
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+      timestamp: new Date(),
     });
-  } catch (err) {
-    // do not throw; avoid breaking main flow due to audit failure
+
+    await auditLog.save();
+  } catch (error) {
+    console.error('Failed to write audit log:', error);
   }
 }
