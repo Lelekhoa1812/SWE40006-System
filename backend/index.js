@@ -331,15 +331,15 @@ server.post('/api/v1/auth/register', async (request, reply) => {
         specialties: specialties || ['general_medicine'],
         rating: 0,
         reviewCount: 0,
-        location: {
+        location: request.body.location || {
           city: '',
           state: '',
           country: 'USA',
         },
-        bio: '',
-        consultationFee: 0,
-        languages: ['English'],
-        availability: {
+        bio: request.body.bio || '',
+        consultationFee: request.body.consultationFee || 0,
+        languages: request.body.languages || ['English'],
+        availability: request.body.availability || {
           monday: [],
           tuesday: [],
           wednesday: [],
