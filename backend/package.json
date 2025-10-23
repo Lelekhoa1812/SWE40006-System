@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Medical app backend API server",
   "private": true,
-  "main": "dist/index.js",
+  "main": "simple-backend.js",
   "scripts": {
     "dev": "tsx watch --require dotenv/config src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node simple-backend.js",
     "test": "vitest",
     "test:run": "vitest run",
     "lint": "eslint src --ext .ts",
