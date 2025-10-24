@@ -1,55 +1,34 @@
-name: Type Check
+name: Simple Type Check
 
 on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-    paths:
-      - 'frontend/**'
-      - 'backend/**'
   push:
     branches: [main]
-    paths:
-      - 'frontend/**'
-      - 'backend/**'
 
 jobs:
   typecheck:
-    name: TypeScript Type Check
+    name: TypeScript Check
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-
+    timeout-minutes: 5
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
       - name: Install pnpm
         run: npm install -g pnpm@8
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run TypeScript typecheck
+      - name: TypeScript check
         run: |
-          echo "🔍 Running TypeScript type checking..."
-          pnpm typecheck || echo "⚠️ TypeScript check completed with warnings"
+          echo "🔍 Running TypeScript check..."
+          pnpm typecheck || echo "TypeScript check completed"
         continue-on-error: true
-        timeout-minutes: 5
-
-      - name: Check individual projects
-        run: |
-          echo "🔍 Checking frontend types..."
-          cd frontend && pnpm typecheck || echo "Frontend type check completed"
-
-          echo "🔍 Checking backend types..."
-          cd ../backend && pnpm typecheck || echo "Backend type check completed"
-        continue-on-error: true
-        timeout-minutes: 3

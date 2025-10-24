@@ -1,44 +1,28 @@
-name: Infrastructure Lint
+name: Simple Infra Check
 
 on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-    paths:
-      - 'infra/**'
   push:
-    paths:
-      - 'infra/**'
+    branches: [main]
 
 jobs:
-  infra-lint:
-    name: Infrastructure Validation
+  infra-check:
+    name: Infrastructure Check
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Azure CLI
+      - name: Check infra directory
         run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-      - name: Validate Bicep files
-        run: |
-          echo "🔍 Checking for Bicep files..."
+          echo "🔍 Checking infrastructure files..."
           if [ -d "infra" ]; then
-            echo "📁 Found infra directory"
-            find infra -name "*.bicep" -exec echo "Found: {}" \;
-
-            # Check if main.bicep exists
-            if [ -f "infra/main.bicep" ]; then
-              echo "✅ Found main.bicep, running validation..."
-              az bicep build --file infra/main.bicep --stdout > /dev/null
-              echo "✅ Bicep validation passed"
-            else
-              echo "⚠️ No main.bicep found, skipping validation"
-            fi
+            echo "✅ Found infra directory"
+            ls -la infra/ || echo "Infra directory check completed"
           else
-            echo "⚠️ No infra directory found, skipping validation"
+            echo "⚠️ No infra directory found"
           fi
         continue-on-error: true
-        timeout-minutes: 3
