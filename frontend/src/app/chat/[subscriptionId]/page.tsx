@@ -30,7 +30,7 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const params = useParams();
   const subscriptionId = params.subscriptionId as string;
 
@@ -41,14 +41,18 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
 
   const loadMessages = async () => {
+    if (!user) {
+      setError('Authentication required');
+      return;
+    }
     try {
       setIsLoading(true);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/chat/messages/${subscriptionId}`,
         {
           headers: {
-            'x-test-user-id': user?.id || '68fa4142885c903d84b6868d',
-            'x-test-user-role': user?.role || 'patient',
+            'x-test-user-id': user.id,
+            'x-test-user-role': user.role,
           },
         }
       );
@@ -56,6 +60,13 @@ export default function ChatPage() {
       if (response.ok) {
         const data = await response.json();
         setMessages(Array.isArray(data) ? data : []);
+        setError(null);
+      } else if (response.status === 403) {
+        setError('Access denied to this chat');
+      } else if (response.status === 401) {
+        setError('Authentication required');
+      } else if (response.status === 404) {
+        setError('Chat not found');
       } else {
         setError('Failed to load messages');
       }
@@ -69,6 +80,10 @@ export default function ChatPage() {
 
   const sendMessage = async () => {
     if (!newMessage.trim() || isSending) return;
+    if (!user) {
+      setError('Authentication required');
+      return;
+    }
 
     try {
       setIsSending(true);
@@ -78,8 +93,8 @@ export default function ChatPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-test-user-id': user?.id || '68fa4142885c903d84b6868d',
-            'x-test-user-role': user?.role || 'patient',
+            'x-test-user-id': user.id,
+            'x-test-user-role': user.role,
           },
           body: JSON.stringify({
             subscriptionId,
@@ -91,8 +106,11 @@ export default function ChatPage() {
 
       if (response.ok) {
         setNewMessage('');
-        // Reload messages
         await loadMessages();
+      } else if (response.status === 403) {
+        setError('Access denied to this chat');
+      } else if (response.status === 401) {
+        setError('Authentication required');
       } else {
         const errorData = await response.json().catch(() => ({}));
         setError(
@@ -108,10 +126,21 @@ export default function ChatPage() {
   };
 
   useEffect(() => {
-    if (subscriptionId) {
+    if (!loading && user && subscriptionId) {
       loadMessages();
     }
-  }, [subscriptionId, loadMessages]);
+  }, [loading, user, subscriptionId]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-2 text-gray-600">Checking authentication…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
