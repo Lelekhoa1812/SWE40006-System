@@ -655,6 +655,28 @@ server.get('/api/v1/subscriptions/mine', async (request, reply) => {
           'profile.firstName profile.lastName username email specialties'
         )
         .sort({ requestedAt: -1 });
+
+      // Enrich doctorId if not populated as expected
+      subscriptions = await Promise.all(
+        subscriptions.map(async (s) => {
+          if (!s.doctorId || !s.doctorId.profile) {
+            const asDoc = await Doctor.findById(s.doctorId);
+            const asUser = asDoc ? null : await User.findById(s.doctorId);
+            if (asDoc || asUser) {
+              const found = asDoc || asUser;
+              const plain = s.toObject();
+              plain.doctorId = {
+                _id: found._id,
+                profile: found.profile || { firstName: '', lastName: '' },
+                username: found.username,
+                email: found.email,
+              };
+              return plain;
+            }
+          }
+          return s;
+        })
+      );
     } else if (userRole === 'doctor') {
       subscriptions = await Subscription.find({ doctorId: userId })
         .populate(
@@ -662,6 +684,35 @@ server.get('/api/v1/subscriptions/mine', async (request, reply) => {
           'profile.firstName profile.lastName username email'
         )
         .sort({ requestedAt: -1 });
+
+      // Enrich patientId if not populated as expected
+      subscriptions = await Promise.all(
+        subscriptions.map(async (s) => {
+          if (!s.patientId || !s.patientId.profile) {
+            const asUser = await User.findById(s.patientId);
+            const asDoc = asUser ? null : await Doctor.findById(s.patientId);
+            if (asUser || asDoc) {
+              const found = asUser || asDoc;
+              const plain = s.toObject();
+              plain.patientId = {
+                _id: found._id,
+                profile: found.profile || { firstName: '', lastName: '' },
+                username: found.username,
+                email: found.email,
+              };
+              return plain;
+            } else if (!s.patientId) {
+              const plain = s.toObject();
+              plain.patientId = {
+                _id: null,
+                profile: { firstName: 'Unknown', lastName: 'Patient' },
+              };
+              return plain;
+            }
+          }
+          return s;
+        })
+      );
     } else {
       return reply.code(403).send({ error: 'Access denied' });
     }
