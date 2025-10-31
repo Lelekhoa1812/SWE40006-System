@@ -650,11 +650,17 @@ server.get('/api/v1/subscriptions/mine', async (request, reply) => {
     let subscriptions;
     if (userRole === 'patient') {
       subscriptions = await Subscription.find({ patientId: userId })
-        .populate('doctorId', 'profile.firstName profile.lastName specialties')
+        .populate(
+          'doctorId',
+          'profile.firstName profile.lastName username email specialties'
+        )
         .sort({ requestedAt: -1 });
     } else if (userRole === 'doctor') {
       subscriptions = await Subscription.find({ doctorId: userId })
-        .populate('patientId', 'profile.firstName profile.lastName')
+        .populate(
+          'patientId',
+          'profile.firstName profile.lastName username email'
+        )
         .sort({ requestedAt: -1 });
     } else {
       return reply.code(403).send({ error: 'Access denied' });

@@ -1,26 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
 
+interface SubscriptionUserRef {
+  _id: string;
+  profile?: {
+    firstName?: string;
+    lastName?: string;
+  };
+  username?: string;
+  email?: string;
+}
+
 interface Subscription {
   _id: string;
-  patientId: {
-    _id: string;
-    profile: {
-      firstName: string;
-      lastName: string;
-    };
-  };
-  doctorId: {
-    _id: string;
-    profile: {
-      firstName: string;
-      lastName: string;
-    };
-  };
+  patientId: SubscriptionUserRef;
+  doctorId: SubscriptionUserRef;
   status: 'requested' | 'approved' | 'denied';
   requestMessage: string;
   responseMessage?: string;
@@ -37,8 +35,9 @@ export default function DoctorDashboard() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef<string | null>(null); // track last user.id loaded to avoid duplicate loads
 
-  const loadSubscriptions = async () => {
+  const loadSubscriptions = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -71,7 +70,7 @@ export default function DoctorDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id, user?.role, user?.username, user?.email]);
 
   const handleSubscriptionAction = async (
     subscriptionId: string,
@@ -116,10 +115,14 @@ export default function DoctorDashboard() {
   };
 
   useEffect(() => {
-    if (user?.role === 'doctor') {
-      loadSubscriptions();
+    // Only load once per distinct doctor user id to prevent infinite reloads
+    if (user?.role === 'doctor' && user.id) {
+      if (hasLoadedRef.current !== user.id) {
+        hasLoadedRef.current = user.id;
+        void loadSubscriptions();
+      }
     }
-  }, [user, loadSubscriptions]);
+  }, [user?.role, user?.id, loadSubscriptions]);
 
   if (user?.role !== 'doctor') {
     return (
@@ -185,9 +188,19 @@ export default function DoctorDashboard() {
           ) : (
             <div className="grid gap-6">
               {subscriptions.map((subscription) => {
-                const patientName = subscription.patientId?.profile
-                  ? `${subscription.patientId.profile.firstName || ''} ${subscription.patientId.profile.lastName || ''}`.trim()
-                  : 'Unknown Patient';
+                const profile = subscription.patientId?.profile;
+                const first = profile?.firstName?.trim();
+                const last = profile?.lastName?.trim();
+                const username = subscription.patientId?.username;
+                const email = subscription.patientId?.email;
+
+                const fullFromProfile = [first, last]
+                  .filter(Boolean)
+                  .join(' ')
+                  .trim();
+
+                const patientName =
+                  fullFromProfile || username || email || 'Unknown Patient';
 
                 return (
                   <Card key={subscription._id}>
